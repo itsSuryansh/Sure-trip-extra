@@ -1,0 +1,2862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SureMyTrip v3 — Multi-City Reliability Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+<link rel="icon" type="image/x-icon" href="https://cdn-icons-png.flaticon.com/512/25/25694.png">
+<style>
+/* ═══════════════════════════════════════════════════════════
+   DARK MODE — UNTOUCHED
+═════════════════════════════════════════════════════════ */  
+:root {
+  --bg:        #080c14;
+  --surface:   #0e1520;
+  --surface2:  #141d2e;
+  --surface3:  #1a253a;
+  --border:    #1e2d45;
+  --border2:   #253550;
+  --text:      #e2e8f4;
+  --text2:     #7e94b8;
+  --text3:     #3d5070;
+  --amber:     #f59e0b;
+  --amber-dim: rgba(245,158,11,0.1);
+  --green:     #22c55e;
+  --green-dim: rgba(34,197,94,0.1);
+  --red:       #ef4444;
+  --red-dim:   rgba(239,68,68,0.1);
+  --yellow:    #eab308;
+  --yellow-dim:rgba(234,179,8,0.1);
+  --blue:      #3b82f6;
+  --blue-dim:  rgba(59,130,246,0.1);
+  --teal:      #14b8a6;
+  --teal-dim:  rgba(20,184,166,0.1);
+}
+
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-x: hidden;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.serif { font-family: 'Instrument Serif', serif; }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+.container { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+
+header {
+  position: sticky; top: 0; z-index: 200;
+  background: rgba(8,12,20,0.92);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px; height: 54px;
+  display: flex; align-items: center; justify-content: space-between;
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.logo-wrap { display: flex; align-items: center; gap: 10px; }
+
+.logo-mark {
+  width: 30px; height: 30px;
+  background: linear-gradient(135deg, var(--amber), #ef4444);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; box-shadow: 0 0 16px rgba(245,158,11,0.3);
+}
+
+.logo-text {
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.8rem; letter-spacing: 0.05em;
+}
+
+.logo-v {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.5rem; font-weight: 500;
+  background: var(--amber-dim);
+  color: var(--amber);
+  border: 1px solid rgba(245,158,11,0.25);
+  padding: 1px 4px; border-radius: 3px;
+  letter-spacing: 0.04em;
+}
+
+.header-stats {
+  display: flex; gap: 20px; align-items: center;
+  font-size: 0.7rem; color: rgb(197, 194, 194);
+}
+
+.header-stat { display: flex; align-items: center; gap: 5px; }
+.stat-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green);
+  box-shadow: 0 0 5px var(--green); animation: blink 2s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+.ticker {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 6px 0; overflow: hidden;
+}
+.ticker-inner {
+  display: flex; gap: 32px; white-space: nowrap;
+  animation: scroll 30s linear infinite;
+  width: max-content;
+}
+@keyframes scroll { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+.ticker-item { font-size: 0.68rem; color: var(--text3); display: flex; align-items: center; gap: 8px; }
+.ticker-item span { color: var(--amber); }
+
+.hero {
+  padding: 64px 0 48px;
+  position: relative; overflow: hidden;
+}
+
+.hero-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 60px 60px;
+  opacity: 0.4; pointer-events: none;
+}
+
+.hero-glow {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 50% 60% at 15% 60%, rgba(245,158,11,0.06) 0%, transparent 70%),
+    radial-gradient(ellipse 35% 50% at 85% 30%, rgba(59,130,246,0.05) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-inner {
+  position: relative;
+  display: grid; grid-template-columns: 1fr 460px;
+  gap: 56px; align-items: start;
+}
+
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--amber-dim);
+  border: 1px solid rgba(245,158,11,0.2);
+  padding: 5px 14px; border-radius: 4px;
+  font-size: 0.68rem; font-weight: 500;
+  color: var(--amber); letter-spacing: 0.06em;
+  text-transform: uppercase; margin-bottom: 18px;
+}
+
+.hero h1 {
+  font-family: 'Instrument Serif', serif;
+  font-size: clamp(2.2rem, 3.8vw, 3.5rem);
+  line-height: 1.1; font-weight: 400;
+  letter-spacing: -0.01em; margin-bottom: 16px;
+}
+
+.hero h1 em {
+  font-style: italic; color: var(--amber);
+}
+
+.hero-sub {
+  color: var(--text2); font-size: 0.82rem;
+  line-height: 1.8; max-width: 460px;
+  margin-bottom: 28px; font-weight: 300;
+}
+
+.hero-cities {
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+
+.city-pill {
+  display: flex; align-items: center; gap: 5px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 5px 12px; border-radius: 4px;
+  font-size: 0.72rem; color: var(--text2);
+}
+
+.form-panel {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  padding: 0;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(245,158,11,0.05), 0 24px 64px rgba(0,0,0,0.5);
+}
+
+.form-panel-head {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface2);
+  font-size: 0.75rem; font-weight: 500;
+  color: var(--text2); letter-spacing: 0.04em;
+}
+
+.form-body { padding: 20px; }
+
+label {
+  display: block; font-size: 0.65rem;
+  font-weight: 500; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--text3);
+  margin-bottom: 5px;
+}
+
+select, input[type="datetime-local"] {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  padding: 9px 12px;
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  appearance: none;
+}
+
+select:focus, input:focus {
+  outline: none;
+  border-color: var(--amber);
+  box-shadow: 0 0 0 3px var(--amber-dim);
+}
+
+.sel-wrap { position: relative; }
+.sel-wrap::after {
+  content: '▾'; position: absolute; right: 10px; top: 50%;
+  transform: translateY(-50%); color: var(--text3);
+  pointer-events: none; font-size: 0.7rem;
+}
+
+.route-row {
+  display: grid; grid-template-columns: 1fr 34px 1fr;
+  gap: 8px; margin-bottom: 14px; align-items: end;
+}
+
+.swap-btn {
+  width: 34px; height: 34px;
+  background: var(--surface3);
+  border: 1px solid var(--border2);
+  border-radius: 6px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text2); transition: all 0.15s;
+  font-size: 0.85rem;
+}
+.swap-btn:hover { border-color: var(--amber); color: var(--amber); }
+
+.time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+
+.pref-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin-bottom: 14px; }
+
+.pref-chip {
+  padding: 8px 4px; text-align: center;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px; cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem; color: var(--text2);
+  transition: all 0.15s;
+}
+.pref-chip:hover { border-color: var(--amber); color: var(--amber); }
+.pref-chip.active { background: var(--amber-dim); border-color: rgba(245,158,11,0.4); color: var(--amber); }
+
+.sim-row { margin-bottom: 14px; }
+.sim-header { display: flex; justify-content: space-between; margin-bottom: 5px; }
+.sim-header label { margin: 0; }
+.sim-val { font-size: 0.72rem; color: var(--amber); font-weight: 600; }
+
+input[type="range"] {
+  padding: 0; height: 3px;
+  background: var(--surface3);
+  border: none; border-radius: 2px; cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  background: var(--amber); border-radius: 50%;
+}
+
+.submit-btn {
+  width: 100%; padding: 12px;
+  background: var(--amber);
+  color: var(--bg);
+  border: none; border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600; font-size: 0.82rem;
+  cursor: pointer; transition: all 0.2s;
+  letter-spacing: 0.02em;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.submit-btn:hover { background: #fbbf24; box-shadow: 0 0 20px rgba(245,158,11,0.4); }
+.submit-btn:disabled { opacity: 0.5; cursor: wait; }
+
+.btn-spinner {
+  width: 13px; height: 13px;
+  border: 2px solid rgba(0,0,0,0.2);
+  border-top-color: var(--bg);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: none;
+}
+.submit-btn.loading .btn-spinner { display: block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.route-info-bar {
+  background: var(--surface2); border-radius: 8px;
+  padding: 10px 14px; margin-bottom: 14px;
+  display: none; align-items: center; justify-content: space-between;
+  border: 1px solid var(--border);
+  font-size: 0.72rem; color: var(--text2);
+}
+.route-info-bar.visible { display: flex; }
+.route-info-bar strong { color: var(--amber); }
+
+.why-section {
+  padding: 48px 0;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.why-grid {
+  display: grid; grid-template-columns: 1fr 1px 1fr;
+  gap: 40px; align-items: start;
+}
+
+.why-divider { background: var(--border); }
+.why-col { padding: 8px 0; }
+
+.why-col-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: 1rem; margin-bottom: 4px;
+}
+
+.why-col-sub { font-size: 0.7rem; color: var(--text3); margin-bottom: 18px; font-style: italic; }
+
+.why-row { display: flex; gap: 10px; margin-bottom: 12px; font-size: 0.78rem; }
+.why-row-icon { flex-shrink: 0; margin-top: 2px; }
+.why-row strong { color: var(--text); display: block; margin-bottom: 1px; font-size: 0.78rem; }
+.why-row span { color: var(--text2); font-size: 0.72rem; }
+
+#results-section { display: none; padding: 48px 0; }
+#results-section.active { display: block; }
+
+.results-hdr {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.results-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.8rem; letter-spacing: -0.01em;
+}
+
+.results-meta { font-size: 0.7rem; color: var(--text2); margin-top: 4px; }
+
+.tag {
+  display: inline-block; padding: 3px 9px; border-radius: 4px;
+  font-size: 0.67rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+
+.tag-amber { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(245,158,11,0.2); }
+.tag-green { background: var(--green-dim); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+.tag-red   { background: var(--red-dim);   color: var(--red);   border: 1px solid rgba(239,68,68,0.2); }
+.tag-yellow{ background: var(--yellow-dim);color: var(--yellow);border: 1px solid rgba(234,179,8,0.2); }
+.tag-blue  { background: var(--blue-dim);  color: var(--blue);  border: 1px solid rgba(59,130,246,0.2); }
+
+.rec-banner {
+  background: var(--surface);
+  border: 1px solid rgba(245,158,11,0.2);
+  border-radius: 10px; padding: 14px 18px;
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 24px;
+  box-shadow: inset 0 0 40px rgba(245,158,11,0.04);
+}
+
+.rec-icon { font-size: 1.6rem; }
+.rec-main { font-family: 'Instrument Serif', serif; font-size: 0.95rem; margin-bottom: 2px; }
+.rec-sub { font-size: 0.72rem; color: var(--text2); }
+
+.options-grid {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 14px; margin-bottom: 28px;
+}
+
+.opt-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden;
+  transition: border-color 0.2s, transform 0.2s;
+  cursor: pointer;
+}
+.opt-card:hover { border-color: var(--amber); transform: translateY(-2px); }
+.opt-card.rec { border-color: rgba(34,197,94,0.3); box-shadow: 0 0 0 1px rgba(34,197,94,0.1); }
+
+.opt-head {
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  background: var(--surface2);
+}
+
+.opt-name {
+  font-family: 'Instrument Serif', serif;
+  font-size: 0.95rem; display: flex; align-items: center; gap: 6px;
+}
+
+.opt-body { padding: 16px; }
+
+.gauge-wrap { text-align: center; padding: 8px 0 12px; }
+
+.gauge { position: relative; width: 100px; height: 100px; margin: 0 auto 8px; }
+.gauge svg { transform: rotate(-225deg); }
+.g-track { fill: none; stroke: var(--surface3); stroke-width: 8; }
+.g-fill {
+  fill: none; stroke-width: 8; stroke-linecap: round;
+  stroke-dasharray: 226;
+  transition: stroke-dashoffset 1.1s cubic-bezier(0.4,0,0.2,1);
+}
+.g-num {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.5rem;
+}
+.gauge-label { font-size: 0.65rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; }
+.gauge-sub { font-size: 0.65rem; color: var(--text3); margin-top: 3px; }
+
+.arr-band {
+  background: var(--surface2); border-radius: 6px;
+  padding: 9px 12px; margin: 10px 0;
+}
+.arr-row {
+  display: flex; justify-content: space-between;
+  font-size: 0.72rem; padding: 3px 0;
+}
+.arr-key { color: var(--text2); }
+.arr-val.best { color: var(--green); }
+.arr-val.avg  { color: var(--text); }
+.arr-val.worst{ color: var(--red); }
+
+.metric-list { margin: 10px 0; }
+.metric-row {
+  display: flex; justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.75rem;
+}
+.metric-row:last-child { border-bottom: none; }
+.mk { color: var(--text2); }
+.mv { font-weight: 600; }
+
+.legs-wrap { margin-top: 12px; }
+.legs-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin-bottom: 8px; }
+
+.leg {
+  display: flex; gap: 9px; margin-bottom: 7px;
+  position: relative;
+}
+.leg::after {
+  content: ''; position: absolute;
+  left: 10px; top: 22px;
+  width: 1px; height: calc(100% + 5px);
+  background: var(--border);
+}
+.leg:last-child::after { display: none; }
+
+.leg-dot {
+  width: 20px; height: 20px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.6rem; font-weight: 700; flex-shrink: 0;
+  border: 2px solid var(--surface); position: relative; z-index: 1;
+}
+
+.leg-info { flex: 1; }
+.leg-mode { font-size: 0.78rem; font-weight: 600; color: var(--text); }
+.leg-route { font-size: 0.68rem; color: var(--text2); margin: 1px 0; }
+.leg-chips { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 3px; }
+.leg-chip {
+  background: var(--surface3); border-radius: 3px;
+  padding: 1px 6px; font-size: 0.65rem; color: var(--text3);
+}
+.leg-chip.warn { background: var(--red-dim); color: var(--red); }
+
+.buf-line {
+  display: flex; align-items: center; gap: 8px;
+  padding: 2px 0 4px 28px; font-size: 0.65rem; color: var(--text3);
+}
+.buf-bar { flex: 1; height: 2px; background: var(--surface3); border-radius: 1px; overflow: hidden; }
+.buf-fill { height: 100%; border-radius: 1px; transition: width 0.5s ease; }
+
+.risk-box {
+  background: var(--surface2); border-radius: 8px;
+  padding: 12px 14px; margin-top: 12px;
+  border-left: 2px solid;
+  font-size: 0.75rem; line-height: 1.6;
+}
+.risk-box.Low    { border-color: var(--green); }
+.risk-box.Medium { border-color: var(--yellow); }
+.risk-box.High   { border-color: var(--red); }
+
+.risk-box-title {
+  font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text3); margin-bottom: 6px;
+}
+
+.sens-pill {
+  display: inline-block; background: var(--surface3);
+  border-radius: 4px; padding: 2px 8px;
+  font-size: 0.65rem; color: var(--text2); margin-top: 6px;
+}
+
+.map-section {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden; margin-bottom: 28px;
+}
+
+.map-top {
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 10px; background: var(--surface2);
+}
+
+.map-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: 0.95rem;
+}
+
+.map-tabs { display: flex; gap: 6px; }
+.mtab {
+  padding: 5px 13px; background: var(--surface3);
+  border: 1px solid var(--border); border-radius: 4px;
+  cursor: pointer; font-size: 0.7rem; color: var(--text2);
+  font-family: 'JetBrains Mono', monospace;
+  transition: all 0.15s;
+}
+.mtab.active { background: var(--amber-dim); border-color: rgba(245,158,11,0.3); color: var(--amber); }
+
+.map-legend {
+  display: flex; gap: 16px; padding: 6px 16px;
+  background: var(--surface2); border-bottom: 1px solid var(--border);
+  font-size: 0.65rem; color: var(--text3);
+}
+.mleg { display: flex; align-items: center; gap: 5px; }
+.mleg-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+#map { height: 380px; }
+
+.dist-bar {
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  gap: 1px; background: var(--border);
+  border-radius: 8px; overflow: hidden;
+  margin-bottom: 24px;
+}
+.dist-item {
+  background: var(--surface); padding: 12px 14px; text-align: center;
+}
+.dist-val { font-family: 'Instrument Serif', serif; font-size: 1.1rem; color: var(--amber); }
+.dist-key { font-size: 0.62rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+
+.hist-section {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 18px; margin-bottom: 28px;
+}
+.hist-title { font-family: 'Instrument Serif', serif; font-size: 1rem; margin-bottom: 3px; }
+.hist-sub { font-size: 0.7rem; color: var(--text2); margin-bottom: 12px; }
+.hist-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+.htab {
+  padding: 4px 12px; background: var(--surface2);
+  border: 1px solid var(--border); border-radius: 4px;
+  cursor: pointer; font-size: 0.68rem; color: var(--text2);
+  font-family: 'JetBrains Mono', monospace; transition: all 0.15s;
+}
+.htab.active { background: var(--surface3); color: var(--text); border-color: var(--border2); }
+#hist-canvas { width: 100%; height: 130px; display: block; }
+.hist-legend { font-size: 0.65rem; color: var(--text3); margin-top: 6px; }
+
+.table-section {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden; margin-bottom: 36px;
+}
+.table-top {
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  background: var(--surface2); display: flex; justify-content: space-between; align-items: center;
+}
+.table-title { font-family: 'Instrument Serif', serif; font-size: 0.95rem; }
+
+table { width: 100%; border-collapse: collapse; }
+th {
+  text-align: left; padding: 9px 14px;
+  font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.07em;
+  color: var(--text3); font-weight: 500;
+  background: var(--surface2); border-bottom: 1px solid var(--border);
+}
+td {
+  padding: 11px 14px; border-bottom: 1px solid var(--border);
+  font-size: 0.78rem; vertical-align: middle;
+}
+tr:last-child td { border-bottom: none; }
+tr.rec-row td { background: rgba(34,197,94,0.03); }
+
+.rpill {
+  display: inline-flex; align-items: center;
+  padding: 2px 9px; border-radius: 4px;
+  font-size: 0.65rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.rpill-Low    { background: var(--green-dim); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+.rpill-Medium { background: var(--yellow-dim);color: var(--yellow);border: 1px solid rgba(234,179,8,0.2); }
+.rpill-High   { background: var(--red-dim);   color: var(--red);   border: 1px solid rgba(239,68,68,0.2); }
+
+.loading-overlay {
+  display: none; position: fixed; inset: 0; z-index: 500;
+  background: rgba(8,12,20,0.88); backdrop-filter: blur(12px);
+  flex-direction: column; align-items: center; justify-content: center;
+}
+.loading-overlay.active { display: flex; }
+.loading-card {
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 12px; padding: 28px 40px; text-align: center;
+}
+.loading-spinner {
+  width: 44px; height: 44px;
+  border: 3px solid var(--surface3); border-top-color: var(--amber);
+  border-radius: 50%; animation: spin 0.8s linear infinite;
+  margin: 0 auto 14px;
+}
+.loading-title { font-family: 'Instrument Serif', serif; font-size: 1rem; margin-bottom: 5px; }
+.loading-steps { font-size: 0.72rem; color: var(--text2); line-height: 2; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.au { animation: fadeUp 0.45s ease forwards; }
+.d1{animation-delay:0.05s;opacity:0} .d2{animation-delay:0.12s;opacity:0}
+.d3{animation-delay:0.2s;opacity:0}  .d4{animation-delay:0.28s;opacity:0}
+
+.leaflet-popup-content-wrapper {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border2) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.6) !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 12px !important;
+}
+.leaflet-popup-tip { background: var(--surface) !important; }
+.leaflet-popup-content { margin: 10px 14px !important; line-height: 1.7 !important; }
+
+footer {
+  background: var(--surface); border-top: 1px solid var(--border);
+  padding: 18px; text-align: center;
+  font-size: 0.65rem; color: var(--text3);
+}
+
+@media (max-width: 900px) {
+  .hero-inner, .why-grid { grid-template-columns: 1fr; }
+  .options-grid { grid-template-columns: 1fr; }
+  .dist-bar { grid-template-columns: 1fr 1fr; }
+  .time-row { grid-template-columns: 1fr; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FANCY THEME TOGGLE BUTTON
+═══════════════════════════════════════════════════════════ */
+.theme-toggle-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Completely hide the real checkbox — no space, no click area bleed */
+.theme-toggle-input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+/* The pill track */
+.theme-toggle-label {
+  position: relative;
+  display: block;
+  width: 58px;
+  height: 30px;
+  border-radius: 30px;
+  cursor: pointer;
+  background: linear-gradient(135deg, #0f1f3d 0%, #1e3460 100%);
+  border: 1.5px solid rgba(100, 149, 237, 0.35);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.2), inset 0 1px 0 rgba(255,255,255,0.04);
+  transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Stars decoration (dark mode) — sits BEHIND the thumb via z-index */
+.theme-toggle-label::before {
+  content: '✦ ✦';
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 5px;
+  letter-spacing: 3px;
+  color: rgba(147, 197, 253, 0.6);
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Sun decoration (light mode) — right side */
+.theme-toggle-label::after {
+  content: '☀';
+  position: absolute;
+  right: 7px;
+  top: 50%;
+  transform: translateY(-50%) scale(0.6);
+  font-size: 14px;
+  color: rgba(245, 158, 11, 0.0);
+  transition: color 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+  z-index: 0;
+  line-height: 1;
+}
+
+/* Sliding thumb knob */
+.toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #d0dcf5, #e8efff);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.7);
+  transition: left 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s ease, box-shadow 0.3s ease;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.toggle-thumb::after {
+  content: '🌙';
+  display: block;
+  transition: opacity 0.2s ease;
+}
+
+/* ── Checked = Light Mode ──────────────────────────────── */
+.theme-toggle-input:checked + .theme-toggle-label {
+  background: linear-gradient(135deg, #ffe9a0 0%, #ffd15e 100%);
+  border-color: rgba(245, 158, 11, 0.45);
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.3), inset 0 1px 0 rgba(255,255,255,0.3);
+}
+
+.theme-toggle-input:checked + .theme-toggle-label::before {
+  opacity: 0;
+}
+
+.theme-toggle-input:checked + .theme-toggle-label::after {
+  color: rgba(180, 100, 0, 0.5);
+  transform: translateY(-50%) scale(1);
+}
+
+.theme-toggle-input:checked + .theme-toggle-label .toggle-thumb {
+  left: 33px;
+  background: linear-gradient(145deg, #f59e0b, #fbbf24);
+  box-shadow: 0 2px 8px rgba(245,158,11,0.5), inset 0 1px 0 rgba(255,255,255,0.35);
+}
+
+.theme-toggle-input:checked + .theme-toggle-label .toggle-thumb::after {
+  content: '☀️';
+}
+
+.theme-toggle-label:hover {
+  transform: scale(1.06);
+  transition: transform 0.15s ease, background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+.theme-toggle-label:active {
+  transform: scale(0.97);
+}
+
+
+body.light {
+
+ 
+  --bg:        #d8d4cc;       /* page background — warm grey    */
+  --surface:   #1c1c1c;       /* dark card panels (form panel)  */
+  --surface2:  #252525;       /* slightly lighter dark surface  */
+  --surface3:  #2e2e2e;       /* chips, inner elements          */
+
+  /* ── Borders ─────────────────────────────────────────────── */
+  --border:    #3a3a3a;
+  --border2:   #484848;
+
+  /* ── Text ────────────────────────────────────────────────── */
+  --text:      #e8e4dc;       /* warm off-white text on dark    */
+  --text2:     #a09888;       /* muted warm text                */
+  --text3:     #6b6055;       /* very muted brown-grey          */
+
+  /* ── Accents — amber/orange from screenshot ─────────────── */
+  --amber:     #e07b20;       /* main orange accent             */
+  --amber-dim: rgba(224,123,32,0.15);
+  --green:     #22c55e;
+  --green-dim: rgba(34,197,94,0.12);
+  --red:       #ef4444;
+  --red-dim:   rgba(239,68,68,0.12);
+  --yellow:    #eab308;
+  --yellow-dim:rgba(234,179,8,0.12);
+  --blue:      #3b82f6;
+  --blue-dim:  rgba(59,130,246,0.12);
+  --teal:      #14b8a6;
+  --teal-dim:  rgba(20,184,166,0.12);
+
+  /* ── Theme tokens ───────────────────────────────────────── */
+  --header-bg:          rgba(30,28,25,0.95);
+  --overlay-bg:         rgba(20,18,15,0.88);
+  --header-stats-color: #a09888;
+  --btn-text:           #ffffff;
+  --shadow-panel:
+    0 0 0 1px rgba(224,123,32,0.12),
+    0 8px 32px rgba(0,0,0,0.5);
+  --shadow-popup:       0 4px 24px rgba(0,0,0,0.5);
+
+  /* ── CRITICAL: paint the background ─────────────────────── */
+  background: var(--bg) !important;
+  color: var(--text) !important;
+}
+
+/* ── Hero — warm grid visible like screenshot ───────────── */
+body.light .hero {
+  background: #d8d4cc;
+}
+body.light .hero-grid {
+  display: block;
+  background-image:
+    linear-gradient(rgba(100,90,80,0.2) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(100,90,80,0.2) 1px, transparent 1px);
+  background-size: 60px 60px;
+  opacity: 1;
+}
+body.light .hero-glow { display: none; }
+
+/* ── Hero text — matches screenshot low contrast style ───── */
+body.light .hero h1 {
+  color: rgba(28,20,12,0.55);
+}
+body.light .hero h1 em {
+  color: var(--amber);
+}
+body.light .hero-sub {
+  color: rgba(28,20,12,0.40);
+}
+
+/* ── Header — dark like screenshot ──────────────────────── */
+body.light header {
+  background: rgba(22,20,17,0.97);
+  border-bottom: 1px solid #3a3a3a;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+}
+body.light .logo-text { color: #e8e4dc; }
+
+/* ── Ticker — dark band ──────────────────────────────────── */
+body.light .ticker {
+  background: #1c1a17;
+  border-bottom: 1px solid #333;
+}
+body.light .ticker-item { color: #6b6055; }
+body.light .ticker-item span { color: var(--amber); }
+
+/* ── City pills ──────────────────────────────────────────── */
+body.light .city-pill {
+  background: #2a2520;
+  border-color: #3d3530;
+  color: #a09888;
+}
+
+/* ── Eyebrow tag ─────────────────────────────────────────── */
+body.light .hero-eyebrow {
+  background: rgba(224,123,32,0.12);
+  border-color: rgba(224,123,32,0.3);
+  color: var(--amber);
+}
+
+/* ── Form panel — dark card on grey bg ───────────────────── */
+body.light .form-panel {
+  background: #1e1c19;
+  border-color: #3d3530;
+  box-shadow: var(--shadow-panel);
+}
+body.light .form-panel-head {
+  background: #252220;
+  border-bottom-color: #3d3530;
+  color: #a09888;
+}
+
+/* ── Inputs ──────────────────────────────────────────────── */
+body.light select,
+body.light input[type="datetime-local"] {
+  color-scheme: dark;
+  background: #2a2520;
+  color: #e8e4dc;
+  border-color: #3d3530;
+}
+body.light select:focus,
+body.light input:focus {
+  border-color: var(--amber);
+  box-shadow: 0 0 0 3px rgba(224,123,32,0.18);
+}
+body.light .sel-wrap::after { color: #6b6055; }
+
+/* ── Swap btn ────────────────────────────────────────────── */
+body.light .swap-btn {
+  background: #2a2520;
+  border-color: #3d3530;
+  color: #a09888;
+}
+
+/* ── Pref chips ──────────────────────────────────────────── */
+body.light .pref-chip {
+  background: #2a2520;
+  border-color: #3d3530;
+  color: #a09888;
+}
+body.light .pref-chip.active {
+  background: rgba(224,123,32,0.18);
+  border-color: rgba(224,123,32,0.45);
+  color: var(--amber);
+}
+
+/* ── Range slider ────────────────────────────────────────── */
+body.light input[type="range"] {
+  background: #3a3530;
+}
+
+/* ── Route info bar ──────────────────────────────────────── */
+body.light .route-info-bar {
+  background: #2a2520;
+  border-color: #3d3530;
+  color: #a09888;
+}
+
+/* ── Results section ─────────────────────────────────────── */
+body.light #results-section {
+  background: #d8d4cc;
+}
+body.light .results-title { color: #1c140c; }
+body.light .results-meta  { color: #6b6055; }
+
+/* ── Rec banner ──────────────────────────────────────────── */
+body.light .rec-banner {
+  background: #1e1c19;
+  border-color: rgba(224,123,32,0.25);
+}
+body.light .rec-main { color: #e8e4dc; }
+body.light .rec-sub  { color: #a09888; }
+
+/* ── Option cards ────────────────────────────────────────── */
+body.light .opt-card {
+  background: #1e1c19;
+  border-color: #3a3530;
+}
+body.light .opt-card.rec {
+  border-color: rgba(34,197,94,0.35);
+}
+body.light .opt-head {
+  background: #252220;
+  border-bottom-color: #3a3530;
+}
+body.light .opt-name  { color: #e8e4dc; }
+body.light .opt-body  { background: #1e1c19; }
+
+/* ── Gauge track ─────────────────────────────────────────── */
+body.light .g-track { stroke: #2e2e2e; }
+
+/* ── Arrival band ────────────────────────────────────────── */
+body.light .arr-band  { background: #252220; }
+body.light .arr-key   { color: #a09888; }
+
+/* ── Metric list ─────────────────────────────────────────── */
+body.light .metric-row { border-bottom-color: #3a3530; }
+body.light .mk { color: #a09888; }
+body.light .mv { color: #e8e4dc; }
+
+/* ── Leg elements ────────────────────────────────────────── */
+body.light .leg::after   { background: #3a3530; }
+body.light .leg-dot      { border-color: #1e1c19; }
+body.light .leg-mode     { color: #e8e4dc; }
+body.light .leg-route    { color: #a09888; }
+body.light .leg-chip     { background: #2e2e2e; color: #6b6055; }
+body.light .buf-bar      { background: #2e2e2e; }
+body.light .buf-line     { color: #6b6055; }
+
+/* ── Risk box ────────────────────────────────────────────── */
+body.light .risk-box     { background: #252220; color: #e8e4dc; }
+body.light .risk-box-title { color: #6b6055; }
+body.light .sens-pill    { background: #2e2e2e; color: #a09888; }
+
+/* ── Info boxes ──────────────────────────────────────────── */
+body.light .info-box         { background: #2a2520; color: #a09888; }
+body.light .info-box strong  { color: #e8e4dc; }
+
+/* ── Dist stats bar ──────────────────────────────────────── */
+body.light .dist-bar  { background: #3a3530; }
+body.light .dist-item { background: #1e1c19; }
+body.light .dist-key  { color: #6b6055; }
+
+/* ── Histogram ───────────────────────────────────────────── */
+body.light .hist-section  { background: #1e1c19; border-color: #3a3530; }
+body.light .hist-title    { color: #e8e4dc; }
+body.light .hist-sub      { color: #a09888; }
+body.light .hist-legend   { color: #6b6055; }
+body.light .htab {
+  background: #252220;
+  border-color: #3a3530;
+  color: #a09888;
+}
+body.light .htab.active {
+  background: #2e2e2e;
+  color: #e8e4dc;
+  border-color: #484848;
+}
+
+/* ── Map ─────────────────────────────────────────────────── */
+body.light .map-section   { background: #1e1c19; border-color: #3a3530; }
+body.light .map-top       { background: #252220; border-bottom-color: #3a3530; }
+body.light .map-title     { color: #e8e4dc; }
+body.light .map-legend    { background: #252220; border-bottom-color: #3a3530; color: #6b6055; }
+body.light .mtab {
+  background: #2e2e2e;
+  border-color: #3a3530;
+  color: #a09888;
+}
+body.light .mtab.active {
+  background: rgba(224,123,32,0.15);
+  border-color: rgba(224,123,32,0.35);
+  color: var(--amber);
+}
+
+/* ── Table ───────────────────────────────────────────────── */
+body.light .table-section  { background: #1e1c19; border-color: #3a3530; }
+body.light .table-top      { background: #252220; border-bottom-color: #3a3530; }
+body.light .table-title    { color: #e8e4dc; }
+body.light th {
+  background: #252220;
+  color: #6b6055;
+  border-bottom-color: #3a3530;
+}
+body.light td {
+  color: #e8e4dc;
+  border-bottom-color: #3a3530;
+}
+body.light tr.rec-row td { background: rgba(34,197,94,0.04); }
+
+/* ── Loading overlay ─────────────────────────────────────── */
+body.light .loading-overlay  { background: rgba(20,18,15,0.88); }
+body.light .loading-card     { background: #1e1c19; border-color: #3a3530; }
+body.light .loading-title    { color: #e8e4dc; }
+body.light .loading-steps    { color: #a09888; }
+
+/* ── Footer ──────────────────────────────────────────────── */
+body.light footer {
+  background: #1a1815;
+  border-top-color: #3a3530;
+  color: #6b6055;
+}
+body.light footer strong { color: #a09888; }
+</style>
+</head>
+<body>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="overlay">
+  <div class="loading-card">
+    <div class="loading-spinner"></div>
+    <div class="loading-title">Running Simulation Engine</div>
+    <div class="loading-steps">
+      Initializing delay propagation model…<br>
+      Monte Carlo: <span id="simDisplay">1000</span> iterations per option…<br>
+      Computing buffer sensitivity analysis…<br>
+      Building risk profiles…
+    </div>
+  </div>
+</div>
+
+<!-- Header -->
+<header>
+  <div class="logo-wrap">
+    <div class="logo-mark">🧭</div>
+    <span class="logo-text">SureMyTrip</span>
+    <span class="logo-v">v1</span>
+  </div>
+  <div class="header-stats">
+    <div class="header-stat"><div class="stat-dot"></div> Engine online</div>
+    <div class="header-stat">6 cities · 30 routes · Delay propagation</div>
+  </div>
+
+  <!-- Fancy Toggle -->
+  <div class="theme-toggle-wrap">
+    <input type="checkbox" id="themeToggle" class="theme-toggle-input">
+    <label for="themeToggle" class="theme-toggle-label">
+      <span class="toggle-thumb"></span>
+    </label>
+  </div>
+</header>
+
+<!-- Ticker -->
+<div class="ticker">
+  <div class="ticker-inner" id="ticker">
+    <!-- populated by JS -->
+  </div>
+</div>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="container">
+    <div class="hero-inner">
+      <!-- Copy -->
+      <div>
+        <div class="hero-eyebrow">⚡ Decision Intelligence · Not Navigation</div>
+        <h1>Journey Reliability,<br><em>Quantified.</em></h1>
+        <p class="hero-sub">
+          SureMyTrip models your journey as a chain of dependent events —
+          not independent segments. When Leg 1 overflows its buffer,
+          the delay cascades into Leg 2, and onwards. We run 1,000+
+          simulations and tell you the exact probability of arriving before your deadline.
+        </p>
+        <div class="hero-cities" id="cityPills">
+          <!-- populated by JS -->
+        </div>
+      </div>
+
+      <!-- Form -->
+      <div class="form-panel">
+        <div class="form-panel-head">
+          <span style="color:var(--amber)">▶</span>
+          JOURNEY PLANNER — MULTI-CITY
+        </div>
+        <div class="form-body">
+
+          <div class="route-row">
+            <div>
+              <label>Origin City</label>
+              <div class="sel-wrap">
+                <select id="src" onchange="onCityChange()">
+                  <option value="delhi">🏛 Delhi</option>
+                  <option value="lucknow">🕌 Lucknow</option>
+                  <option value="chandigarh">🌿 Chandigarh</option>
+                  <option value="jaipur">🏰 Jaipur</option>
+                  <option value="pune">🎓 Pune</option>
+                  <option value="shimla">❄️ Shimla</option>
+                </select>
+              </div>
+            </div>
+            <button class="swap-btn" onclick="swapCities()" title="Swap">⇄</button>
+            <div>
+              <label>Destination City</label>
+              <div class="sel-wrap">
+                <select id="dst" onchange="onCityChange()">
+                  <option value="lucknow">🕌 Lucknow</option>
+                  <option value="delhi">🏛 Delhi</option>
+                  <option value="chandigarh">🌿 Chandigarh</option>
+                  <option value="jaipur">🏰 Jaipur</option>
+                  <option value="pune">🎓 Pune</option>
+                  <option value="shimla">❄️ Shimla</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="route-info-bar" id="routeInfoBar">
+            Route: <strong id="routeDistLabel">—</strong> &nbsp;·&nbsp; Modes available: <strong id="routeModesLabel">—</strong>
+          </div>
+
+          <div class="time-row">
+            <div>
+              <label>Departure Time</label>
+              <input type="datetime-local" id="dep"/>
+            </div>
+            <div>
+              <label>Must Arrive By</label>
+              <input type="datetime-local" id="dead"/>
+            </div>
+          </div>
+
+          <div style="margin-bottom:12px">
+            <label>Priority</label>
+            <div class="pref-row">
+              <button class="pref-chip" data-p="fastest">⚡ Fastest</button>
+              <button class="pref-chip" data-p="cheapest">💰 Cheapest</button>
+              <button class="pref-chip active" data-p="reliable">🛡 Reliable</button>
+            </div>
+          </div>
+
+          <div class="sim-row">
+            <div class="sim-header">
+              <label>Simulation Runs</label>
+              <span class="sim-val" id="simVal">1000</span>
+            </div>
+            <input type="range" min="500" max="2000" step="100" value="1000" id="simSlider"
+              oninput="document.getElementById('simVal').textContent=this.value"/>
+          </div>
+
+          <button class="submit-btn" id="planBtn" onclick="planJourney()">
+            <div class="btn-spinner"></div>
+            <span id="btnText">▶ Analyze Journey Reliability</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Results -->
+<section id="results-section">
+  <div class="container">
+    <div class="results-hdr au d1">
+      <div>
+        <div class="results-title" id="resTitle">Journey Analysis</div>
+        <div class="results-meta" id="resMeta"></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="tag tag-amber" id="simTag"></span>
+        <span class="tag tag-blue" id="distTag"></span>
+      </div>
+    </div>
+
+    <div class="rec-banner au d2">
+      <div class="rec-icon">✅</div>
+      <div>
+        <div class="rec-main" id="recMain"></div>
+        <div class="rec-sub" id="recSub"></div>
+      </div>
+    </div>
+
+    <!-- Distance stats bar -->
+    <div class="dist-bar au d2" id="distBar">
+      <div class="dist-item"><div class="dist-val" id="dDist">—</div><div class="dist-key">Distance</div></div>
+      <div class="dist-item"><div class="dist-val" id="dWindow">—</div><div class="dist-key">Deadline Window</div></div>
+      <div class="dist-item"><div class="dist-val" id="dBestProb">—</div><div class="dist-key">Best Reliability</div></div>
+      <div class="dist-item"><div class="dist-val" id="dBestCost">—</div><div class="dist-key">Cheapest Option</div></div>
+      <div class="dist-item"><div class="dist-val" id="dFastest">—</div><div class="dist-key">Fastest Option</div></div>
+    </div>
+
+    <!-- Options -->
+    <div class="options-grid au d3" id="optGrid"></div>
+
+    <!-- Histogram -->
+    <div class="hist-section au d4">
+      <div class="hist-title">Arrival Time Distribution</div>
+      <div class="hist-sub">Monte Carlo simulation output — spread of predicted arrival times across all runs</div>
+      <div class="hist-tabs" id="histTabs"></div>
+      <canvas id="hist-canvas" width="1000" height="130"></canvas>
+      <div class="hist-legend" id="histLegend"></div>
+    </div>
+
+    <!-- Map -->
+    <div class="map-section au d4">
+      <div class="map-top">
+        <div class="map-title">Route Visualization</div>
+        <div class="map-tabs" id="mapTabs"></div>
+      </div>
+      <div class="map-legend">
+        <div class="mleg"><div class="mleg-dot" style="background:#22c55e"></div>Low risk leg</div>
+        <div class="mleg"><div class="mleg-dot" style="background:#eab308"></div>Medium risk</div>
+        <div class="mleg"><div class="mleg-dot" style="background:#ef4444"></div>High risk leg</div>
+        <div class="mleg"><div class="mleg-dot" style="background:#f59e0b;border-radius:0"></div>Transfer buffer</div>
+      </div>
+      <div id="map"></div>
+    </div>
+
+    <!-- Comparison Table -->
+    <div class="table-section au d4">
+      <div class="table-top">
+        <div class="table-title">Full Comparison</div>
+        <span class="tag tag-amber">Sorted by reliability</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Option</th>
+            <th>On-Time Prob.</th>
+            <th>Risk</th>
+            <th>Total Time</th>
+            <th>Cost</th>
+            <th>Avg Arrival</th>
+            <th>Worst (95%)</th>
+            <th>Key Risk</th>
+          </tr>
+        </thead>
+        <tbody id="compBody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <strong style="color:var(--text2)">SureMyTrip v1</strong> ·
+  Multi-City Reliability Intelligence ·
+  Delhi · Lucknow · Chandigarh · Jaipur · Pune · Shimla ·
+  Monte Carlo Delay Propagation ·
+  Not a navigation service
+</footer>
+
+<script>
+const CITIES = {
+  delhi:      { name:"Delhi",      lat:28.6139, lon:77.2090,  code:"DEL", emoji:"🏛" },
+  lucknow:    { name:"Lucknow",    lat:26.8467, lon:80.9462,  code:"LKO", emoji:"🕌" },
+  chandigarh: { name:"Chandigarh", lat:30.7333, lon:76.7794,  code:"IXC", emoji:"🌿" },
+  jaipur:     { name:"Jaipur",     lat:26.9124, lon:75.7873,  code:"JAI", emoji:"🏰" },
+  pune:       { name:"Pune",       lat:18.5204, lon:73.8567,  code:"PNQ", emoji:"🎓" },
+  shimla:     { name:"Shimla",     lat: 31.1048, lon: 77.1734, code: "SML", emoji: "❄️"}
+};
+
+const HUBS = {
+  "delhi.home":            { name:"Connaught Place",                  lat:28.6315, lon:77.2167 },
+  "delhi.railway_station": { name:"New Delhi Railway Station (NDLS)", lat:28.6419, lon:77.2195 },
+  "delhi.airport":         { name:"Indira Gandhi Intl Airport (IGI)", lat:28.5562, lon:77.1000 },
+  "delhi.bus_terminal":    { name:"Kashmere Gate ISBT",               lat:28.6670, lon:77.2286 },
+  "delhi.metro_station":   { name:"Rajiv Chowk Metro Station",        lat:28.6328, lon:77.2197 },
+  "lucknow.home":            { name:"Hazratganj",                     lat:26.8467, lon:80.9462 },
+  "lucknow.railway_station": { name:"Charbagh Railway Station",       lat:26.8467, lon:80.9148 },
+  "lucknow.airport":         { name:"Chaudhary Charan Singh Airport", lat:26.7606, lon:80.8893 },
+  "lucknow.bus_terminal":    { name:"Alambagh Bus Terminal",          lat:26.8004, lon:80.9014 },
+  "lucknow.metro_station":   { name:"Hazratganj Metro Station",       lat:26.8467, lon:80.9462 },
+  "chandigarh.home":            { name:"Sector 17 Plaza",              lat:30.7417, lon:76.7882 },
+  "chandigarh.railway_station": { name:"Chandigarh Railway Station",  lat:30.7090, lon:76.8020 },
+  "chandigarh.airport":         { name:"Chandigarh International Airport", lat:30.6735, lon:76.7885 },
+  "chandigarh.bus_terminal":    { name:"ISBT Sector 43",              lat:30.7074, lon:76.7908 },
+  "chandigarh.metro_station":   { name:"Chandigarh City Center",      lat:30.7333, lon:76.7794 },
+  "jaipur.home":            { name:"MI Road / City Center",            lat:26.9199, lon:75.8162 },
+  "jaipur.railway_station": { name:"Jaipur Junction Railway Station",  lat:26.9215, lon:75.7873 },
+  "jaipur.airport":         { name:"Jaipur International Airport",     lat:26.8242, lon:75.8122 },
+  "jaipur.bus_terminal":    { name:"Sindhi Camp Bus Stand",            lat:26.9185, lon:75.7970 },
+  "jaipur.metro_station":   { name:"Chandpole Metro Station",          lat:26.9228, lon:75.8078 },
+  "pune.home":            { name:"Shivajinagar / FC Road",              lat:18.5314, lon:73.8446 },
+  "pune.railway_station": { name:"Pune Junction Railway Station",       lat:18.5279, lon:73.8742 },
+  "pune.airport":         { name:"Pune Airport (PNQ)",                  lat:18.5822, lon:73.9197 },
+  "pune.bus_terminal":    { name:"Swargate Bus Terminal",               lat:18.5018, lon:73.8636 },
+  "pune.metro_station":   { name:"Shivajinagar Metro Station",          lat:18.5314, lon:73.8446 },
+  "shimla.home":          { name: "Shimla City Center",                lat: 31.1048, lon: 77.1734 },
+   "shimla.bus_terminal": { name: "Shimla ISBT",                       lat: 31.1048, lon: 77.1734 },
+"shimla.railway_station": { name: "Shimla Railway Station",            lat: 31.1048, lon: 77.1734 },
+};
+
+const MODES = {
+  metro:          { name:"Metro",             icon:"🚇", color:"#3b82f6" },
+  cab:            { name:"Cab",               icon:"🚕", color:"#f59e0b" },
+  auto:           { name:"Auto Rickshaw",     icon:"🛺", color:"#10b981" },
+  dtc_bus:        { name:"City Bus",          icon:"🚌", color:"#8b5cf6" },
+  express_train:  { name:"Express Train",     icon:"🚄", color:"#06b6d4" },
+  mail_train:     { name:"Mail/Express Train",icon:"🚂", color:"#64748b" },
+  flight:         { name:"Flight",            icon:"✈️", color:"#ef4444" },
+  intercity_bus:  { name:"Intercity Bus",     icon:"🚎", color:"#d97706" },
+  volvo_bus:      { name:"Volvo/AC Bus",      icon:"🚐", color:"#7c3aed" },
+};
+
+const ROUTES = {
+
+          //==================== DELHI ↔ OTHERS ===================
+
+  "delhi_lucknow": {
+    distance: 556,
+    fastest: { name:"Fastest", icon:"⚡", desc:"Metro + Flight + Cab — 3.5-4hr total including transfers",
+      legs:[
+        {mode:"metro",  from:"delhi.home",      to:"delhi.airport",      base:45,  v:9,  buf:15, cost:60},
+        {mode:"flight", from:"delhi.airport",   to:"lucknow.airport",    base:65,  v:20, buf:20, cost:4200},
+        {mode:"cab",    from:"lucknow.airport", to:"lucknow.home",       base:35,  v:12, buf:0,  cost:350},
+      ]},
+    cheapest: { name:"Cheapest", icon:"💰", desc:"City bus + Intercity bus — overnight, lowest cost",
+      legs:[
+        {mode:"dtc_bus",       from:"delhi.home",          to:"delhi.bus_terminal",   base:50,  v:14, buf:20, cost:25},
+        {mode:"intercity_bus", from:"delhi.bus_terminal",  to:"lucknow.bus_terminal", base:480, v:55, buf:15, cost:450},
+        {mode:"auto",          from:"lucknow.bus_terminal",to:"lucknow.home",         base:25,  v:9,  buf:0,  cost:120},
+      ]},
+    reliable: { name:"Most Used", icon:"🛡", desc:"Metro + Shatabdi Express + Metro — best on-time record",
+      legs:[
+        {mode:"metro",         from:"delhi.home",            to:"delhi.railway_station",    base:20,  v:7,  buf:30, cost:30},
+        {mode:"express_train", from:"delhi.railway_station", to:"lucknow.railway_station",  base:390, v:25, buf:25, cost:650},
+        {mode:"metro",         from:"lucknow.metro_station", to:"lucknow.home",             base:12,  v:5,  buf:0,  cost:20},
+      ]},
+  },
+  "delhi_chandigarh": {
+    distance: 250,
+    fastest: { name:"Fastest", icon:"⚡", desc:"Cab + Volvo AC Bus via NH-44 — faster than train with less overhead",
+      legs:[
+        {mode:"cab",       from:"delhi.home",            to:"delhi.bus_terminal",       base:35,  v:14, buf:15, cost:280},
+        {mode:"volvo_bus", from:"delhi.bus_terminal",    to:"chandigarh.bus_terminal",  base:240, v:28, buf:10, cost:600},
+        {mode:"cab",       from:"chandigarh.bus_terminal",to:"chandigarh.home",         base:20,  v:8,  buf:0,  cost:200},
+      ]},
+    cheapest: { name:"Cheapest", icon:"💰", desc:"City bus + Intercity bus — most affordable NH-44 option",
+      legs:[
+        {mode:"dtc_bus",       from:"delhi.home",            to:"delhi.bus_terminal",       base:50,  v:14, buf:20, cost:25},
+        {mode:"intercity_bus", from:"delhi.bus_terminal",    to:"chandigarh.bus_terminal",  base:270, v:32, buf:15, cost:320},
+        {mode:"auto",          from:"chandigarh.bus_terminal",to:"chandigarh.home",         base:18,  v:7,  buf:0,  cost:100},
+      ]},
+    reliable: { name:"Most Used", icon:"🛡", desc:"Metro + Shatabdi Express — fixed schedule, good punctuality",
+      legs:[
+        {mode:"metro",         from:"delhi.home",            to:"delhi.railway_station",       base:20,  v:7,  buf:30, cost:30},
+        {mode:"express_train", from:"delhi.railway_station", to:"chandigarh.railway_station",  base:210, v:18, buf:20, cost:520},
+        {mode:"cab",           from:"chandigarh.railway_station",to:"chandigarh.home",         base:18,  v:7,  buf:0,  cost:180},
+      ]},
+  },
+  "delhi_jaipur": {
+    distance: 270,
+    fastest: { name:"Fastest", icon:"⚡", desc:"Direct cab via NH-48 Jaipur Expressway — no terminal overhead",
+      legs:[
+        {mode:"cab", from:"delhi.home", to:"jaipur.home", base:270, v:38, buf:0, cost:3200},
+      ]},
+    cheapest: { name:"Cheapest", icon:"💰", desc:"City bus + Rajasthan Roadways — most affordable",
+      legs:[
+        {mode:"dtc_bus",       from:"delhi.home",         to:"delhi.bus_terminal",  base:50,  v:14, buf:20, cost:25},
+        {mode:"intercity_bus", from:"delhi.bus_terminal", to:"jaipur.bus_terminal", base:300, v:38, buf:10, cost:280},
+        {mode:"auto",          from:"jaipur.bus_terminal",to:"jaipur.home",         base:20,  v:8,  buf:0,  cost:80},
+      ]},
+    reliable: { name:"Most Used", icon:"🛡", desc:"Metro + Shatabdi/Intercity Express — high punctuality",
+      legs:[
+        {mode:"metro",         from:"delhi.home",            to:"delhi.railway_station",   base:20,  v:7,  buf:30, cost:30},
+        {mode:"express_train", from:"delhi.railway_station", to:"jaipur.railway_station",  base:270, v:20, buf:20, cost:480},
+        {mode:"cab",           from:"jaipur.railway_station",to:"jaipur.home",             base:12,  v:6,  buf:0,  cost:120},
+      ]},
+  },
+  "delhi_pune": {
+    distance: 1408,
+    fastest: { name:"Fastest", icon:"⚡", desc:"Metro + Flight + Cab — only practical fast option for 1400km",
+      legs:[
+        {mode:"metro",  from:"delhi.home",    to:"delhi.airport",  base:45,  v:9,  buf:15, cost:60},
+        {mode:"flight", from:"delhi.airport", to:"pune.airport",   base:120, v:25, buf:25, cost:5500},
+        {mode:"cab",    from:"pune.airport",  to:"pune.home",      base:30,  v:14, buf:0,  cost:450},
+      ]},
+    cheapest: { name:"Cheapest", icon:"💰", desc:"Metro + Mail/Express Train — most economical for 1400km",
+      legs:[
+        {mode:"metro",      from:"delhi.home",            to:"delhi.railway_station",  base:20,   v:7,  buf:30, cost:30},
+        {mode:"mail_train", from:"delhi.railway_station", to:"pune.railway_station",   base:1380, v:80, buf:30, cost:1200},
+        {mode:"metro",      from:"pune.railway_station",  to:"pune.home",              base:20,   v:10, buf:0,  cost:30},
+      ]},
+    reliable: { name:"Most Used", icon:"🛡", desc:"Metro + Flight + Cab — most reliable for 1400km with generous buffers",
+      legs:[
+        {mode:"metro",  from:"delhi.home",    to:"delhi.airport",  base:45,  v:9,  buf:20, cost:60},
+        {mode:"flight", from:"delhi.airport", to:"pune.airport",   base:120, v:22, buf:25, cost:5800},
+        {mode:"cab",    from:"pune.airport",  to:"pune.home",      base:30,  v:14, buf:0,  cost:450},
+      ]},
+  },
+  "delhi_shimla": {
+    distance: 350,
+    fastest: { name:"Fastest", icon:"⚡", desc:"Metro + Flight to Chandigarh + Cab uphill — ~5.5hr door-to-door",
+      legs:[
+        {mode:"metro",  from:"delhi.home",         to:"delhi.airport",         base:45,  v:9,  buf:20, cost:60},
+        {mode:"flight", from:"delhi.airport",      to:"chandigarh.airport",    base:60,  v:20, buf:20, cost:3500},
+        {mode:"cab",    from:"chandigarh.airport", to:"shimla.home",           base:210, v:55, buf:0,  cost:2500},
+      ]},
+    cheapest: { name:"Cheapest", icon:"💰", desc:"City bus + HRTC overnight bus — cheapest option",
+      legs:[
+        {mode:"dtc_bus",  from:"delhi.home",         to:"delhi.bus_terminal",  base:50,  v:14, buf:20, cost:25},
+        {mode:"hrtc_bus", from:"delhi.bus_terminal", to:"shimla.bus_terminal", base:540, v:90, buf:20, cost:500},
+        {mode:"auto",     from:"shimla.bus_terminal",to:"shimla.home",         base:15,  v:7,  buf:0,  cost:100},
+      ]},
+    reliable: { name:"Most Used", icon:"🛡", desc:"Metro + Kalka Shatabdi + Toy Train — most structured timing",
+      legs:[
+        {mode:"metro",         from:"delhi.home",            to:"delhi.railway_station",       base:30,  v:10, buf:30, cost:40},
+        {mode:"express_train", from:"delhi.railway_station", to:"chandigarh.railway_station",  base:210, v:18, buf:30, cost:520},
+        {mode:"toy_train",     from:"chandigarh.railway_station",to:"shimla.railway_station",  base:330, v:35, buf:0,  cost:500},
+      ]},
+  },
+
+        // ==================== LUCKNOW ↔ OTHERS ====================
+
+  "lucknow_chandigarh": {
+    distance: 600,
+    fastest: { name:"Fastest", icon:"⚡", desc:"Cab + Via-Delhi flight + Cab — 1-stop via IGI, no direct flight",
+      legs:[
+        {mode:"cab",    from:"lucknow.home",      to:"lucknow.airport",    base:40, v:14, buf:20, cost:380},
+        {mode:"flight", from:"lucknow.airport",   to:"delhi.airport",      base:65, v:20, buf:60, cost:3200},
+        {mode:"flight", from:"delhi.airport",     to:"chandigarh.airport", base:55, v:18, buf:15, cost:2800},
+        {mode:"cab",    from:"chandigarh.airport",to:"chandigarh.home",    base:25, v:9,  buf:0,  cost:220},
+      ]},
+    cheapest: { name:"Cheapest", icon:"💰", desc:"Auto + Overnight direct bus Lucknow–Chandigarh",
+      legs:[
+        {mode:"auto",          from:"lucknow.home",         to:"lucknow.bus_terminal",    base:25,  v:9,  buf:20, cost:100},
+        {mode:"intercity_bus", from:"lucknow.bus_terminal", to:"chandigarh.bus_terminal", base:600, v:65, buf:20, cost:700},
+        {mode:"auto",          from:"chandigarh.bus_terminal",to:"chandigarh.home",       base:18,  v:7,  buf:0,  cost:100},
+      ]},
+    reliable: { name:"Most Used", icon:"🛡", desc:"Auto + Express Train (Chandigarh Express) — direct rail",
+      legs:[
+        {mode:"auto",          from:"lucknow.home",           to:"lucknow.railway_station",    base:20,  v:8,  buf:35, cost:80},
+        {mode:"express_train", from:"lucknow.railway_station",to:"chandigarh.railway_station", base:660, v:40, buf:20, cost:750},
+        {mode:"cab",           from:"chandigarh.railway_station",to:"chandigarh.home",         base:18,  v:7,  buf:0,  cost:180},
+      ]},
+  },
+
+  "lucknow_jaipur": {
+    distance: 630,
+    fastest: { name:"Fastest", icon:"⚡", desc:"Cab + Direct flight (LKO–JAI) + Cab",
+      legs:[
+        {mode:"cab",    from:"lucknow.home",    to:"lucknow.airport", base:40, v:14, buf:20, cost:380},
+        {mode:"flight", from:"lucknow.airport", to:"jaipur.airport",  base:80, v:22, buf:20, cost:4500},
+        {mode:"cab",    from:"jaipur.airport",  to:"jaipur.home",     base:25, v:10, buf:0,  cost:300},
+      ]},
+    cheapest: { name:"Cheapest", icon:"💰", desc:"Auto + Mail Express train (direct LKO–JAI route)",
+      legs:[
+        {mode:"auto",       from:"lucknow.home",           to:"lucknow.railway_station", base:20,  v:8,  buf:35, cost:80},
+        {mode:"mail_train", from:"lucknow.railway_station",to:"jaipur.railway_station",  base:600, v:55, buf:20, cost:580},
+        {mode:"auto",       from:"jaipur.railway_station", to:"jaipur.home",             base:12,  v:6,  buf:0,  cost:80},
+      ]},
+    reliable: { name:"Most Used", icon:"🛡", desc:"Auto + Express train with extra buffer — better punctuality",
+      legs:[
+        {mode:"auto",          from:"lucknow.home",           to:"lucknow.railway_station", base:20,  v:8,  buf:35, cost:80},
+        {mode:"express_train", from:"lucknow.railway_station",to:"jaipur.railway_station",  base:560, v:38, buf:25, cost:780},
+        {mode:"cab",           from:"jaipur.railway_station", to:"jaipur.home",             base:12,  v:6,  buf:0,  cost:120},
+      ]},
+  },
+  "lucknow_pune": {
+    distance: 1400,
+    fastest: { name:"Fastest", icon:"⚡", desc:"Cab + Direct flight (IndiGo LKO–PNQ) + Cab",
+      legs:[
+        {mode:"cab",    from:"lucknow.home",    to:"lucknow.airport", base:40,  v:14, buf:20, cost:380},
+        {mode:"flight", from:"lucknow.airport", to:"pune.airport",    base:110, v:24, buf:20, cost:5200},
+        {mode:"cab",    from:"pune.airport",    to:"pune.home",       base:30,  v:14, buf:0,  cost:450},
+      ]},
+    cheapest: { name:"Cheapest", icon:"💰", desc:"Auto + Long-distance Express train — economical for 1400km",
+      legs:[
+        {mode:"auto",       from:"lucknow.home",           to:"lucknow.railway_station", base:20,   v:8,  buf:30, cost:80},
+        {mode:"mail_train", from:"lucknow.railway_station",to:"pune.railway_station",    base:1320, v:75, buf:30, cost:1100},
+        {mode:"metro",      from:"pune.railway_station",   to:"pune.home",               base:20,   v:10, buf:0,  cost:30},
+      ]},
+    reliable: { name:"Most Used", icon:"🛡", desc:"Cab + Flight + Cab — only reliable option; generous airport buffers",
+      legs:[
+        {mode:"cab",    from:"lucknow.home",    to:"lucknow.airport", base:40,  v:14, buf:25, cost:380},
+        {mode:"flight", from:"lucknow.airport", to:"pune.airport",    base:110, v:22, buf:25, cost:5500},
+        {mode:"cab",    from:"pune.airport",    to:"pune.home",       base:30,  v:14, buf:0,  cost:450},
+      ]},
+  },
+
+  "lucknow_delhi": {
+    distance: 550,
+
+    fastest: {
+        name:"Fastest", icon:"⚡",
+        desc:"Cab + direct flight + cab — fastest (~2–3 hrs total)",
+        legs:[
+            {mode:"cab", from:"lucknow.home", to:"lucknow.airport", base:35, v:12, buf:20, cost:300},
+            {mode:"flight", from:"lucknow.airport", to:"delhi.airport", base:80, v:20, buf:25, cost:3200},
+            {mode:"cab", from:"delhi.airport", to:"delhi.home", base:40, v:15, buf:0, cost:500},
+        ]
+    },
+
+    cheapest: {
+        name:"Cheapest", icon:"💰",
+        desc:"Auto + intercity train — cheapest and widely used",
+        legs:[
+            {mode:"auto", from:"lucknow.home", to:"lucknow.railway_station", base:25, v:10, buf:25, cost:100},
+            {mode:"intercity_train", from:"lucknow.railway_station", to:"delhi.railway_station", base:420, v:35, buf:25, cost:450},
+            {mode:"metro", from:"delhi.railway_station", to:"delhi.home", base:25, v:10, buf:0, cost:60},
+        ]
+    },
+
+    reliable: {
+        name:"Most Used", icon:"🛡️",
+        desc:"Express train (Shatabdi/Rajdhani) — structured and punctual",
+        legs:[
+            {mode:"auto", from:"lucknow.home", to:"lucknow.railway_station", base:25, v:10, buf:30, cost:100},
+            {mode:"express_train", from:"lucknow.railway_station", to:"delhi.railway_station", base:390, v:20, buf:20, cost:800},
+            {mode:"metro", from:"delhi.railway_station", to:"delhi.home", base:25, v:10, buf:0, cost:60},
+        ]
+    }
+},
+  "lucknow_shimla": {
+    distance: 800,
+    fastest: { name:"Fastest", icon:"⚡", desc:"Cab + Flight to Chandigarh + Cab uphill — ~7hr door-to-door",
+      legs:[
+        {mode:"cab",    from:"lucknow.home",      to:"lucknow.airport",    base:40,  v:14, buf:20, cost:380},
+        {mode:"flight", from:"lucknow.airport",   to:"chandigarh.airport", base:100, v:25, buf:20, cost:5000},
+        {mode:"cab",    from:"chandigarh.airport",to:"shimla.home",        base:210, v:55, buf:0,  cost:2500},
+      ]},
+    cheapest: { name:"Cheapest", icon:"💰", desc:"Bus to Delhi + HRTC bus to Shimla — cheapest multi-leg option",
+      legs:[
+        {mode:"auto",          from:"lucknow.home",         to:"lucknow.bus_terminal",  base:25,  v:9,  buf:20, cost:100},
+        {mode:"intercity_bus", from:"lucknow.bus_terminal", to:"delhi.bus_terminal",    base:480, v:55, buf:20, cost:450},
+        {mode:"hrtc_bus",      from:"delhi.bus_terminal",   to:"shimla.bus_terminal",   base:540, v:90, buf:15, cost:500},
+        {mode:"auto",          from:"shimla.bus_terminal",  to:"shimla.home",           base:15,  v:7,  buf:0,  cost:100},
+      ]},
+    reliable: { name:"Most Used", icon:"🛡", desc:"Train via Delhi + Kalka Shatabdi + Toy Train — most structured timing",
+      legs:[
+        {mode:"auto",          from:"lucknow.home",           to:"lucknow.railway_station",    base:20,  v:8,  buf:35, cost:80},
+        {mode:"express_train", from:"lucknow.railway_station",to:"delhi.railway_station",      base:390, v:25, buf:30, cost:650},
+        {mode:"express_train", from:"delhi.railway_station",  to:"chandigarh.railway_station", base:210, v:18, buf:20, cost:520},
+        {mode:"toy_train",     from:"chandigarh.railway_station",to:"shimla.railway_station",  base:330, v:35, buf:0,  cost:500},
+      ]},
+  },
+
+            // ======================= CHANDIGARH ↔ OTHERS ====================
+
+
+  "chandigarh_jaipur": {
+    distance: 540,
+    fastest: { name:"Fastest", icon:"⚡", desc:"Cab + Volvo AC Bus via NH-48 — direct overnight, beats train overhead",
+      legs:[
+        {mode:"cab",       from:"chandigarh.home",        to:"chandigarh.bus_terminal", base:22,  v:8,  buf:15, cost:200},
+        {mode:"volvo_bus", from:"chandigarh.bus_terminal",to:"jaipur.bus_terminal",     base:480, v:50, buf:10, cost:800},
+        {mode:"cab",       from:"jaipur.bus_terminal",    to:"jaipur.home",             base:15,  v:7,  buf:0,  cost:120},
+      ]},
+    cheapest: { name:"Cheapest", icon:"💰", desc:"Auto + State bus (Chandigarh to Jaipur) — cheapest direct",
+      legs:[
+        {mode:"auto",          from:"chandigarh.home",        to:"chandigarh.bus_terminal", base:20,  v:7,  buf:20, cost:100},
+        {mode:"intercity_bus", from:"chandigarh.bus_terminal",to:"jaipur.bus_terminal",     base:510, v:55, buf:15, cost:550},
+        {mode:"auto",          from:"jaipur.bus_terminal",    to:"jaipur.home",             base:15,  v:7,  buf:0,  cost:80},
+      ]},
+    reliable: { name:"Most Used", icon:"🛡", desc:"Cab + Express Train (via Delhi) — most predictable despite longer routing",
+      legs:[
+        {mode:"cab",           from:"chandigarh.home",           to:"chandigarh.railway_station", base:20,  v:8,  buf:35, cost:180},
+        {mode:"express_train", from:"chandigarh.railway_station",to:"jaipur.railway_station",     base:720, v:45, buf:25, cost:860},
+        {mode:"cab",           from:"jaipur.railway_station",    to:"jaipur.home",                base:12,  v:6,  buf:0,  cost:120},
+      ]},
+  },
+
+  "chandigarh_delhi": {
+    distance: 250,
+
+    fastest: {
+        name:"Fastest", icon:"⚡",
+        desc:"Cab + direct flight + cab — fastest (~2.5–3 hrs total)",
+        legs:[
+            {mode:"cab", from:"chandigarh.home", to:"chandigarh.airport", base:30, v:10, buf:20, cost:300},
+            {mode:"flight", from:"chandigarh.airport", to:"delhi.airport", base:70, v:20, buf:25, cost:3000},
+            {mode:"cab", from:"delhi.airport", to:"delhi.home", base:40, v:15, buf:0, cost:500},
+        ]
+    },
+
+    cheapest: {
+        name:"Cheapest", icon:"💰",
+        desc:"Auto + Shatabdi / Express train — cheapest and very efficient",
+        legs:[
+            {mode:"auto", from:"chandigarh.home", to:"chandigarh.railway_station", base:20, v:8, buf:20, cost:80},
+            {mode:"express_train", from:"chandigarh.railway_station", to:"delhi.railway_station", base:210, v:20, buf:20, cost:400},
+            {mode:"metro", from:"delhi.railway_station", to:"delhi.home", base:25, v:10, buf:0, cost:60},
+        ]
+    },
+
+    reliable: {
+        name:"Most Used", icon:"🛡️",
+        desc:"Cab direct highway (NH44) — no transfers, stable timing",
+        legs:[
+            {mode:"cab", from:"chandigarh.home", to:"delhi.home", base:260, v:35, buf:0, cost:2500},
+        ]
+    }
+},
+
+"chandigarh_lucknow": {
+    distance: 750,
+
+    fastest: {
+        name:"Fastest", icon:"⚡",
+        desc:"Cab + flight via Delhi + cab — fastest (~5–6 hrs)",
+        legs:[
+            {mode:"cab", from:"chandigarh.home", to:"chandigarh.airport", base:30, v:10, buf:25, cost:300},
+            {mode:"flight", from:"chandigarh.airport", to:"delhi.airport", base:70, v:20, buf:40, cost:3000},
+            {mode:"flight", from:"delhi.airport", to:"lucknow.airport", base:80, v:20, buf:20, cost:3500},
+            {mode:"cab", from:"lucknow.airport", to:"lucknow.home", base:35, v:12, buf:0, cost:300},
+        ]
+    },
+
+    cheapest: {
+        name:"Cheapest", icon:"💰",
+        desc:"Auto + long-distance train — cheapest",
+        legs:[
+            {mode:"auto", from:"chandigarh.home", to:"chandigarh.railway_station", base:20, v:8, buf:25, cost:80},
+            {mode:"mail_train", from:"chandigarh.railway_station", to:"lucknow.railway_station", base:600, v:60, buf:30, cost:600},
+            {mode:"auto", from:"lucknow.railway_station", to:"lucknow.home", base:25, v:10, buf:0, cost:100},
+        ]
+    },
+
+    reliable: {
+        name:"Most Used", icon:"🛡️",
+        desc:"Train via Delhi — structured and predictable",
+        legs:[
+            {mode:"auto", from:"chandigarh.home", to:"chandigarh.railway_station", base:20, v:8, buf:30, cost:80},
+            {mode:"express_train", from:"chandigarh.railway_station", to:"delhi.railway_station", base:210, v:20, buf:40, cost:400},
+            {mode:"express_train", from:"delhi.railway_station", to:"lucknow.railway_station", base:420, v:35, buf:20, cost:500},
+            {mode:"auto", from:"lucknow.railway_station", to:"lucknow.home", base:25, v:10, buf:0, cost:100},
+        ]
+    }
+},
+  "chandigarh_pune": {
+    distance: 1650,
+    fastest: { name:"Fastest", icon:"⚡", desc:"Cab + Flight (1-stop via Delhi/Mumbai) + Cab",
+      legs:[
+        {mode:"cab",    from:"chandigarh.home",    to:"chandigarh.airport", base:28,  v:10, buf:20, cost:280},
+        {mode:"flight", from:"chandigarh.airport", to:"pune.airport",       base:155, v:28, buf:20, cost:6200},
+        {mode:"cab",    from:"pune.airport",       to:"pune.home",          base:30,  v:14, buf:0,  cost:450},
+      ]},
+    cheapest: { name:"Cheapest", icon:"💰", desc:"Cab + Long-distance train (via Delhi) — slow but affordable for 1650km",
+      legs:[
+        {mode:"cab",        from:"chandigarh.home",           to:"chandigarh.railway_station", base:20,   v:8,  buf:35, cost:180},
+        {mode:"mail_train", from:"chandigarh.railway_station",to:"pune.railway_station",       base:1680, v:95, buf:30, cost:1400},
+        {mode:"metro",      from:"pune.railway_station",      to:"pune.home",                  base:20,   v:10, buf:0,  cost:30},
+      ]},
+    reliable: { name:"Most Used", icon:"🛡", desc:"Cab + Flight + Cab — only reliable option; train variance too high",
+      legs:[
+        {mode:"cab",    from:"chandigarh.home",    to:"chandigarh.airport", base:28,  v:10, buf:20, cost:280},
+        {mode:"flight", from:"chandigarh.airport", to:"pune.airport",       base:155, v:25, buf:25, cost:6500},
+        {mode:"cab",    from:"pune.airport",       to:"pune.home",          base:30,  v:14, buf:0,  cost:450},
+      ]},
+  },
+  "chandigarh_shimla": {
+    distance: 115,
+    fastest: { name:"Fastest", icon:"⚡", desc:"Direct cab uphill via NH-5 — fastest door-to-door",
+      legs:[
+        {mode:"cab", from:"chandigarh.home", to:"shimla.home", base:180, v:50, buf:0, cost:2200},
+      ]},
+    cheapest: { name:"Cheapest", icon:"💰", desc:"HRTC Bus (Chandigarh ISBT to Shimla) — cheapest hill route",
+      legs:[
+        {mode:"auto",     from:"chandigarh.home",        to:"chandigarh.bus_terminal", base:18,  v:7,  buf:15, cost:100},
+        {mode:"hrtc_bus", from:"chandigarh.bus_terminal",to:"shimla.bus_terminal",     base:240, v:60, buf:10, cost:300},
+        {mode:"auto",     from:"shimla.bus_terminal",    to:"shimla.home",             base:15,  v:7,  buf:0,  cost:100},
+      ]},
+    reliable: { name:"Most Used", icon:"🛡", desc:"Cab to Kalka + Toy Train — NMR rarely cancels; scenic and structured",
+      legs:[
+        {mode:"cab",       from:"chandigarh.home",           to:"chandigarh.railway_station",  base:45,  v:12, buf:20, cost:400},
+        {mode:"toy_train", from:"chandigarh.railway_station",to:"shimla.railway_station",      base:330, v:35, buf:0,  cost:500},
+      ]},
+  },
+
+          // ==================== JAIPUR ↔ OTHERS ====================
+  "jaipur_pune": {
+    distance: 1150,
+    fastest: { name:"Fastest", icon:"⚡", desc:"Metro + Direct flight (IndiGo JAI–PNQ) + Cab — ~4.5hr door-to-door",
+      legs:[
+        {mode:"metro",  from:"jaipur.home",   to:"jaipur.airport", base:28, v:7,  buf:15, cost:35},
+        {mode:"flight", from:"jaipur.airport",to:"pune.airport",   base:95, v:22, buf:20, cost:4800},
+        {mode:"cab",    from:"pune.airport",  to:"pune.home",      base:30, v:14, buf:0,  cost:450},
+      ]},
+    cheapest: { name:"Cheapest", icon:"💰", desc:"Cab + Mail/Express train (Jaipur–Pune Express) — affordable long haul",
+      legs:[
+        {mode:"cab",        from:"jaipur.home",          to:"jaipur.railway_station", base:12,  v:6,  buf:35, cost:120},
+        {mode:"mail_train", from:"jaipur.railway_station",to:"pune.railway_station",  base:960, v:65, buf:25, cost:900},
+        {mode:"metro",      from:"pune.railway_station", to:"pune.home",              base:20,  v:10, buf:0,  cost:30},
+      ]},
+    reliable: { name:"Most Used", icon:"🛡", desc:"Metro + Flight + Cab — most reliable for 1150km with extra buffer",
+      legs:[
+        {mode:"metro",  from:"jaipur.home",   to:"jaipur.airport", base:28, v:7,  buf:20, cost:35},
+        {mode:"flight", from:"jaipur.airport",to:"pune.airport",   base:95, v:20, buf:25, cost:5100},
+        {mode:"cab",    from:"pune.airport",  to:"pune.home",      base:30, v:14, buf:0,  cost:450},
+      ]},
+  },
+
+  "lucknow_delhi": {
+    distance: 550,
+
+    fastest: {
+        name:"Fastest", icon:"⚡",
+        desc:"Cab + direct flight + cab — fastest (~2–3 hrs total)",
+        legs:[
+            {mode:"cab", from:"lucknow.home", to:"lucknow.airport", base:35, v:12, buf:20, cost:300},
+            {mode:"flight", from:"lucknow.airport", to:"delhi.airport", base:80, v:20, buf:25, cost:3200},
+            {mode:"cab", from:"delhi.airport", to:"delhi.home", base:40, v:15, buf:0, cost:500},
+        ]
+    },
+
+    cheapest: {
+        name:"Cheapest", icon:"💰",
+        desc:"Auto + intercity train — cheapest and widely used",
+        legs:[
+            {mode:"auto", from:"lucknow.home", to:"lucknow.railway_station", base:25, v:10, buf:25, cost:100},
+            {mode:"intercity_train", from:"lucknow.railway_station", to:"delhi.railway_station", base:420, v:35, buf:25, cost:450},
+            {mode:"metro", from:"delhi.railway_station", to:"delhi.home", base:25, v:10, buf:0, cost:60},
+        ]
+    },
+
+    reliable: {
+        name:"Most Used", icon:"🛡️",
+        desc:"Express train (Shatabdi/Rajdhani) — structured and punctual",
+        legs:[
+            {mode:"auto", from:"lucknow.home", to:"lucknow.railway_station", base:25, v:10, buf:30, cost:100},
+            {mode:"express_train", from:"lucknow.railway_station", to:"delhi.railway_station", base:390, v:20, buf:20, cost:800},
+            {mode:"metro", from:"delhi.railway_station", to:"delhi.home", base:25, v:10, buf:0, cost:60},
+        ]
+    }
+},
+"jaipur_lucknow": {
+    distance: 570,
+
+    fastest: {
+        name:"Fastest", icon:"⚡",
+        desc:"Cab + flight via Delhi — fastest (~5–6 hrs)",
+        legs:[
+            {mode:"cab", from:"jaipur.home", to:"jaipur.airport", base:25, v:10, buf:20, cost:300},
+            {mode:"flight", from:"jaipur.airport", to:"delhi.airport", base:60, v:15, buf:40, cost:2500},
+            {mode:"flight", from:"delhi.airport", to:"lucknow.airport", base:80, v:20, buf:20, cost:3500},
+            {mode:"cab", from:"lucknow.airport", to:"lucknow.home", base:35, v:12, buf:0, cost:300},
+        ]
+    },
+
+    cheapest: {
+        name:"Cheapest", icon:"💰",
+        desc:"Auto + long-distance train — cheapest option",
+        legs:[
+            {mode:"auto", from:"jaipur.home", to:"jaipur.railway_station", base:20, v:8, buf:25, cost:80},
+            {mode:"mail_train", from:"jaipur.railway_station", to:"lucknow.railway_station", base:600, v:60, buf:30, cost:500},
+            {mode:"auto", from:"lucknow.railway_station", to:"lucknow.home", base:25, v:10, buf:0, cost:100},
+        ]
+    },
+
+    reliable: {
+        name:"Most Used", icon:"🛡️",
+        desc:"Train via Delhi — structured and reliable",
+        legs:[
+            {mode:"auto", from:"jaipur.home", to:"jaipur.railway_station", base:20, v:8, buf:30, cost:80},
+            {mode:"express_train", from:"jaipur.railway_station", to:"delhi.railway_station", base:240, v:20, buf:40, cost:500},
+            {mode:"express_train", from:"delhi.railway_station", to:"lucknow.railway_station", base:420, v:35, buf:20, cost:500},
+            {mode:"auto", from:"lucknow.railway_station", to:"lucknow.home", base:25, v:10, buf:0, cost:100},
+        ]
+    }
+},
+
+"jaipur_chandigarh": {
+    distance: 520,
+
+    fastest: {
+        name:"Fastest", icon:"⚡",
+        desc:"Cab via NH152/NH44 — fastest (~8–9 hrs)",
+        legs:[
+            {mode:"cab", from:"jaipur.home", to:"chandigarh.home", base:480, v:60, buf:0, cost:4000},
+        ]
+    },
+    cheapest: {
+        name:"Cheapest", icon:"💰",
+        desc:"Auto + train via Delhi — cheapest option",
+        legs:[
+            {mode:"auto", from:"jaipur.home", to:"jaipur.railway_station", base:20, v:8, buf:25, cost:80},
+            {mode:"express_train", from:"jaipur.railway_station", to:"delhi.railway_station", base:240, v:25, buf:30, cost:300},
+            {mode:"express_train", from:"delhi.railway_station", to:"chandigarh.railway_station", base:210, v:20, buf:20, cost:400},
+            {mode:"auto", from:"chandigarh.railway_station", to:"chandigarh.home", base:20, v:8, buf:0, cost:80},
+        ]
+    },
+    reliable: {
+        name:"Most Used", icon:"🛡️",
+        desc:"Train via Delhi — structured schedule, moderate reliability",
+        legs:[
+            {mode:"auto", from:"jaipur.home", to:"jaipur.railway_station", base:20, v:8, buf:30, cost:80},
+            {mode:"express_train", from:"jaipur.railway_station", to:"delhi.railway_station", base:240, v:20, buf:40, cost:500},
+            {mode:"express_train", from:"delhi.railway_station", to:"chandigarh.railway_station", base:210, v:20, buf:20, cost:400},
+            {mode:"auto", from:"chandigarh.railway_station", to:"chandigarh.home", base:20, v:8, buf:0, cost:80},
+        ]
+    }
+},
+
+  "jaipur_shimla": {
+    distance: 600,
+    fastest: { name:"Fastest", icon:"⚡", desc:"Cab + Flight via Chandigarh + Cab uphill — ~6hr door-to-door",
+      legs:[
+        {mode:"cab",    from:"jaipur.home",       to:"jaipur.airport",      base:30,  v:10, buf:20, cost:300},
+        {mode:"flight", from:"jaipur.airport",    to:"chandigarh.airport",  base:90,  v:25, buf:20, cost:4500},
+        {mode:"cab",    from:"chandigarh.airport",to:"shimla.home",         base:210, v:55, buf:0,  cost:2500},
+      ]},
+    cheapest: { name:"Cheapest", icon:"💰", desc:"Intercity bus to Delhi + HRTC bus to Shimla — cheapest multi-leg",
+      legs:[
+        {mode:"intercity_bus", from:"jaipur.bus_terminal", to:"delhi.bus_terminal",  base:300, v:40, buf:15, cost:350},
+        {mode:"hrtc_bus",      from:"delhi.bus_terminal",  to:"shimla.bus_terminal", base:540, v:90, buf:15, cost:500},
+        {mode:"auto",          from:"shimla.bus_terminal", to:"shimla.home",         base:15,  v:7,  buf:0,  cost:100},
+      ]},
+    reliable: { name:"Most Used", icon:"🛡", desc:"Train via Delhi + Kalka Shatabdi + Toy Train — structured schedule",
+      legs:[
+        {mode:"cab",           from:"jaipur.home",          to:"jaipur.railway_station",     base:12,  v:6,  buf:35, cost:120},
+        {mode:"express_train", from:"jaipur.railway_station",to:"delhi.railway_station",      base:270, v:20, buf:30, cost:480},
+        {mode:"express_train", from:"delhi.railway_station", to:"chandigarh.railway_station", base:210, v:18, buf:20, cost:520},
+        {mode:"toy_train",     from:"chandigarh.railway_station",to:"shimla.railway_station", base:330, v:35, buf:0,  cost:500},
+      ]},
+  },
+         //==========================PUNE ↔ OTHERS===========================
+  "pune_shimla": {
+    distance: 1800,
+    fastest: { name:"Fastest", icon:"⚡", desc:"Cab + Flight to Chandigarh + Cab uphill — only practical fast option",
+      legs:[
+        {mode:"cab",    from:"pune.home",         to:"pune.airport",         base:30,  v:14, buf:20, cost:400},
+        {mode:"flight", from:"pune.airport",      to:"chandigarh.airport",   base:150, v:30, buf:20, cost:6500},
+        {mode:"cab",    from:"chandigarh.airport",to:"shimla.home",          base:210, v:55, buf:0,  cost:2500},
+      ]},
+    cheapest: { name:"Cheapest", icon:"💰", desc:"Train to Delhi + HRTC bus to Shimla — most economical for 1800km",
+      legs:[
+        {mode:"metro",      from:"pune.home",            to:"pune.railway_station",   base:20,   v:10, buf:30, cost:30},
+        {mode:"mail_train", from:"pune.railway_station", to:"delhi.railway_station",  base:1380, v:85, buf:30, cost:1200},
+        {mode:"hrtc_bus",   from:"delhi.bus_terminal",   to:"shimla.bus_terminal",    base:540,  v:90, buf:15, cost:500},
+        {mode:"auto",       from:"shimla.bus_terminal",  to:"shimla.home",            base:15,   v:7,  buf:0,  cost:100},
+      ]},
+    reliable: { name:"Most Used", icon:"🛡", desc:"Cab + Flight to Chandigarh + Cab — eliminates train variance for long haul",
+      legs:[
+        {mode:"cab",    from:"pune.home",         to:"pune.airport",         base:30,  v:14, buf:20, cost:400},
+        {mode:"flight", from:"pune.airport",      to:"chandigarh.airport",   base:150, v:28, buf:25, cost:6800},
+        {mode:"cab",    from:"chandigarh.airport",to:"shimla.home",          base:210, v:50, buf:0,  cost:2500},
+      ]},
+  },
+  "pune_delhi": {
+    distance: 1400,
+
+    fastest: {
+        name:"Fastest", icon:"⚡",
+        desc:"Cab + direct flight + cab — fastest (~3–4 hrs)",
+        legs:[
+            {mode:"cab", from:"pune.home", to:"pune.airport", base:40, v:12, buf:30, cost:350},
+            {mode:"flight", from:"pune.airport", to:"delhi.airport", base:130, v:25, buf:25, cost:5000},
+            {mode:"cab", from:"delhi.airport", to:"delhi.home", base:40, v:15, buf:0, cost:500},
+        ]
+    },
+
+    cheapest: {
+        name:"Cheapest", icon:"💰",
+        desc:"Auto + long-distance train — cheapest option",
+        legs:[
+            {mode:"auto", from:"pune.home", to:"pune.railway_station", base:20, v:8, buf:25, cost:80},
+            {mode:"mail_train", from:"pune.railway_station", to:"delhi.railway_station", base:1380, v:80, buf:30, cost:900},
+            {mode:"metro", from:"delhi.railway_station", to:"delhi.home", base:30, v:10, buf:0, cost:60},
+        ]
+    },
+
+    reliable: {
+        name:"Most Used", icon:"🛡️",
+        desc:"Flight with higher buffer — most predictable",
+        legs:[
+            {mode:"cab", from:"pune.home", to:"pune.airport", base:40, v:12, buf:35, cost:350},
+            {mode:"flight", from:"pune.airport", to:"delhi.airport", base:130, v:20, buf:40, cost:5200},
+            {mode:"cab", from:"delhi.airport", to:"delhi.home", base:40, v:15, buf:0, cost:500},
+        ]
+    }
+},
+"pune_chandigarh": {
+    distance: 1650,
+
+    fastest: {
+        name:"Fastest", icon:"⚡",
+        desc:"Cab + flight via Delhi — fastest (~5–6 hrs)",
+        legs:[
+            {mode:"cab", from:"pune.home", to:"pune.airport", base:40, v:12, buf:30, cost:350},
+            {mode:"flight", from:"pune.airport", to:"delhi.airport", base:130, v:25, buf:40, cost:5000},
+            {mode:"flight", from:"delhi.airport", to:"chandigarh.airport", base:70, v:20, buf:20, cost:3000},
+            {mode:"cab", from:"chandigarh.airport", to:"chandigarh.home", base:30, v:10, buf:0, cost:300},
+        ]
+    },
+
+    cheapest: {
+        name:"Cheapest", icon:"💰",
+        desc:"Train via Delhi — cheapest long-distance route",
+        legs:[
+            {mode:"auto", from:"pune.home", to:"pune.railway_station", base:20, v:8, buf:25, cost:80},
+            {mode:"mail_train", from:"pune.railway_station", to:"delhi.railway_station", base:1380, v:80, buf:30, cost:900},
+            {mode:"express_train", from:"delhi.railway_station", to:"chandigarh.railway_station", base:210, v:20, buf:20, cost:400},
+            {mode:"auto", from:"chandigarh.railway_station", to:"chandigarh.home", base:20, v:8, buf:0, cost:80},
+        ]
+    },
+
+    reliable: {
+        name:"Most Used", icon:"🛡️",
+        desc:"Flight + cab — structured with buffers",
+        legs:[
+            {mode:"cab", from:"pune.home", to:"pune.airport", base:40, v:12, buf:35, cost:350},
+            {mode:"flight", from:"pune.airport", to:"delhi.airport", base:130, v:20, buf:40, cost:5200},
+            {mode:"cab", from:"delhi.airport", to:"chandigarh.home", base:300, v:45, buf:0, cost:2800},
+        ]
+    }
+},
+"pune_lucknow": {
+    distance: 1400,
+
+    fastest: {
+        name:"Fastest", icon:"⚡",
+        desc:"Cab + direct flight + cab — fastest (~4–5 hrs)",
+        legs:[
+            {mode:"cab", from:"pune.home", to:"pune.airport", base:40, v:12, buf:30, cost:350},
+            {mode:"flight", from:"pune.airport", to:"lucknow.airport", base:130, v:25, buf:25, cost:5500},
+            {mode:"cab", from:"lucknow.airport", to:"lucknow.home", base:35, v:12, buf:0, cost:300},
+        ]
+    },
+
+    cheapest: {
+        name:"Cheapest", icon:"💰",
+        desc:"Mail train — cheapest direct route",
+        legs:[
+            {mode:"auto", from:"pune.home", to:"pune.railway_station", base:20, v:8, buf:25, cost:80},
+            {mode:"mail_train", from:"pune.railway_station", to:"lucknow.railway_station", base:1320, v:75, buf:30, cost:900},
+            {mode:"auto", from:"lucknow.railway_station", to:"lucknow.home", base:25, v:10, buf:0, cost:100},
+        ]
+    },
+
+    reliable: {
+        name:"Most Used", icon:"🛡️",
+        desc:"Flight via Delhi — structured and predictable",
+        legs:[
+            {mode:"cab", from:"pune.home", to:"pune.airport", base:40, v:12, buf:35, cost:350},
+            {mode:"flight", from:"pune.airport", to:"delhi.airport", base:130, v:20, buf:40, cost:5200},
+            {mode:"flight", from:"delhi.airport", to:"lucknow.airport", base:80, v:20, buf:20, cost:3000},
+            {mode:"cab", from:"lucknow.airport", to:"lucknow.home", base:35, v:12, buf:0, cost:300},
+        ]
+    }
+},
+"pune_jaipur": {
+    distance: 1150,
+
+    fastest: {
+        name:"Fastest", icon:"⚡",
+        desc:"Cab + direct flight + cab — fastest (~3.5–4.5 hrs)",
+        legs:[
+            {mode:"cab", from:"pune.home", to:"pune.airport", base:40, v:12, buf:30, cost:350},
+            {mode:"flight", from:"pune.airport", to:"jaipur.airport", base:120, v:25, buf:25, cost:5500},
+            {mode:"cab", from:"jaipur.airport", to:"jaipur.home", base:30, v:10, buf:0, cost:250},
+        ]
+    },
+
+    cheapest: {
+        name:"Cheapest", icon:"💰",
+        desc:"Auto + mail train — cheapest long-distance option",
+        legs:[
+            {mode:"auto", from:"pune.home", to:"pune.railway_station", base:20, v:8, buf:25, cost:80},
+            {mode:"mail_train", from:"pune.railway_station", to:"jaipur.railway_station", base:1100, v:70, buf:30, cost:850},
+            {mode:"auto", from:"jaipur.railway_station", to:"jaipur.home", base:25, v:10, buf:0, cost:100},
+        ]
+    },
+
+    reliable: {
+        name:"Most Used", icon:"🛡️",
+        desc:"Flight via Delhi + train — structured and predictable",
+        legs:[
+            {mode:"cab", from:"pune.home", to:"pune.airport", base:40, v:12, buf:35, cost:350},
+            {mode:"flight", from:"pune.airport", to:"delhi.airport", base:130, v:20, buf:40, cost:5200},
+            {mode:"express_train", from:"delhi.railway_station", to:"jaipur.railway_station", base:240, v:20, buf:20, cost:500},
+            {mode:"auto", from:"jaipur.railway_station", to:"jaipur.home", base:25, v:10, buf:0, cost:100},
+        ]
+    }
+},
+
+     //=========================SHIMLA ↔ OTHERS ================================
+"shimla_delhi": {
+    distance: 350,
+
+    fastest: {
+        name:"Fastest", icon:"⚡",
+        desc:"Cab downhill + flight from Chandigarh — fastest (~5–6 hrs)",
+        legs:[
+            {mode:"cab", from:"shimla.home", to:"chandigarh.airport", base:210, v:55, buf:30, cost:2500},
+            {mode:"flight", from:"chandigarh.airport", to:"delhi.airport", base:70, v:20, buf:20, cost:3000},
+            {mode:"cab", from:"delhi.airport", to:"delhi.home", base:40, v:15, buf:0, cost:500},
+        ]
+    },
+
+    cheapest: {
+        name:"Cheapest", icon:"💰",
+        desc:"Bus + overnight HRTC to Delhi — cheapest option",
+        legs:[
+            {mode:"auto", from:"shimla.home", to:"shimla.bus_terminal", base:15, v:7, buf:20, cost:100},
+            {mode:"hrtc_bus", from:"shimla.bus_terminal", to:"delhi.bus_terminal", base:600, v:90, buf:20, cost:500},
+            {mode:"auto", from:"delhi.bus_terminal", to:"delhi.home", base:20, v:10, buf:0, cost:100},
+        ]
+    },
+
+    reliable: {
+        name:"Most Used", icon:"🛡️",
+        desc:"Toy train + express via Kalka — scenic and structured",
+        legs:[
+            {mode:"auto", from:"shimla.home", to:"shimla.railway_station", base:10, v:5, buf:20, cost:60},
+            {mode:"toy_train", from:"shimla.railway_station", to:"kalka.railway_station", base:330, v:35, buf:30, cost:500},
+            {mode:"express_train", from:"kalka.railway_station", to:"delhi.railway_station", base:260, v:20, buf:20, cost:500},
+        ]
+    }
+},
+"shimla_lucknow": {
+    distance: 800,
+
+    fastest: {
+        name:"Fastest", icon:"⚡",
+        desc:"Cab to Chandigarh + flight via Delhi — fastest (~7–8 hrs)",
+        legs:[
+            {mode:"cab", from:"shimla.home", to:"chandigarh.airport", base:210, v:55, buf:30, cost:2500},
+            {mode:"flight", from:"chandigarh.airport", to:"delhi.airport", base:70, v:20, buf:40, cost:3000},
+            {mode:"flight", from:"delhi.airport", to:"lucknow.airport", base:80, v:20, buf:20, cost:3500},
+            {mode:"cab", from:"lucknow.airport", to:"lucknow.home", base:35, v:12, buf:0, cost:300},
+        ]
+    },
+
+    cheapest: {
+        name:"Cheapest", icon:"💰",
+        desc:"Bus + train via Delhi — cheapest multi-leg",
+        legs:[
+            {mode:"auto", from:"shimla.home", to:"shimla.bus_terminal", base:15, v:7, buf:20, cost:100},
+            {mode:"hrtc_bus", from:"shimla.bus_terminal", to:"delhi.bus_terminal", base:600, v:90, buf:20, cost:500},
+            {mode:"intercity_train", from:"delhi.railway_station", to:"lucknow.railway_station", base:420, v:35, buf:20, cost:450},
+        ]
+    },
+
+    reliable: {
+        name:"Most Used", icon:"🛡️",
+        desc:"Toy train + express via Delhi — structured timing",
+        legs:[
+            {mode:"auto", from:"shimla.home", to:"shimla.railway_station", base:10, v:5, buf:25, cost:60},
+            {mode:"toy_train", from:"shimla.railway_station", to:"kalka.railway_station", base:330, v:35, buf:30, cost:500},
+            {mode:"express_train", from:"kalka.railway_station", to:"delhi.railway_station", base:260, v:20, buf:40, cost:500},
+            {mode:"express_train", from:"delhi.railway_station", to:"lucknow.railway_station", base:420, v:35, buf:20, cost:500},
+        ]
+    }
+},
+"shimla_chandigarh": {
+    distance: 115,
+
+    fastest: {
+        name:"Fastest", icon:"⚡",
+        desc:"Direct cab downhill — fastest (~3–4 hrs)",
+        legs:[
+            {mode:"cab", from:"shimla.home", to:"chandigarh.home", base:180, v:50, buf:0, cost:2200},
+        ]
+    },
+
+    cheapest: {
+        name:"Cheapest", icon:"💰",
+        desc:"HRTC bus — cheapest hill route",
+        legs:[
+            {mode:"auto", from:"shimla.home", to:"shimla.bus_terminal", base:15, v:7, buf:20, cost:100},
+            {mode:"hrtc_bus", from:"shimla.bus_terminal", to:"chandigarh.bus_terminal", base:240, v:60, buf:10, cost:300},
+            {mode:"auto", from:"chandigarh.bus_terminal", to:"chandigarh.home", base:15, v:7, buf:0, cost:100},
+        ]
+    },
+
+    reliable: {
+        name:"Most Used", icon:"🛡️",
+        desc:"Toy train via Kalka — scenic but consistent",
+        legs:[
+            {mode:"toy_train", from:"shimla.railway_station", to:"kalka.railway_station", base:330, v:35, buf:30, cost:500},
+            {mode:"cab", from:"kalka.railway_station", to:"chandigarh.home", base:45, v:10, buf:0, cost:300},
+        ]
+    }
+},
+"shimla_pune": {
+    distance: 1800,
+
+    fastest: {
+        name:"Fastest", icon:"⚡",
+        desc:"Cab + flight via Delhi — fastest (~7–9 hrs)",
+        legs:[
+            {mode:"cab", from:"shimla.home", to:"chandigarh.airport", base:210, v:55, buf:30, cost:2500},
+            {mode:"flight", from:"chandigarh.airport", to:"delhi.airport", base:70, v:20, buf:40, cost:3000},
+            {mode:"flight", from:"delhi.airport", to:"pune.airport", base:130, v:25, buf:20, cost:5000},
+            {mode:"cab", from:"pune.airport", to:"pune.home", base:30, v:10, buf:0, cost:300},
+        ]
+    },
+
+    cheapest: {
+        name:"Cheapest", icon:"💰",
+        desc:"Bus + long-distance train — cheapest",
+        legs:[
+            {mode:"hrtc_bus", from:"shimla.bus_terminal", to:"delhi.bus_terminal", base:600, v:90, buf:30, cost:500},
+            {mode:"mail_train", from:"delhi.railway_station", to:"pune.railway_station", base:1320, v:80, buf:30, cost:1100},
+        ]
+    },
+
+    reliable: {
+        name:"Most Used", icon:"🛡️",
+        desc:"Train via Delhi — structured long-distance travel",
+        legs:[
+            {mode:"toy_train", from:"shimla.railway_station", to:"kalka.railway_station", base:330, v:35, buf:30, cost:500},
+            {mode:"express_train", from:"kalka.railway_station", to:"delhi.railway_station", base:260, v:20, buf:40, cost:500},
+            {mode:"mail_train", from:"delhi.railway_station", to:"pune.railway_station", base:1320, v:80, buf:30, cost:1100},
+        ]
+    }
+},
+"shimla_jaipur": {
+    distance: 630,
+
+    fastest: {
+        name:"Fastest", icon:"⚡",
+        desc:"Cab to Chandigarh + cab/train to Jaipur — fastest (~9–10 hrs)",
+        legs:[
+            {mode:"cab", from:"shimla.home", to:"chandigarh.home", base:180, v:50, buf:30, cost:2200},
+            {mode:"cab", from:"chandigarh.home", to:"jaipur.home", base:480, v:60, buf:0, cost:3500},
+        ]
+    },
+
+    cheapest: {
+        name:"Cheapest", icon:"💰",
+        desc:"Bus + train via Delhi — cheapest option",
+        legs:[
+            {mode:"hrtc_bus", from:"shimla.bus_terminal", to:"delhi.bus_terminal", base:600, v:90, buf:30, cost:500},
+            {mode:"intercity_train", from:"delhi.railway_station", to:"jaipur.railway_station", base:270, v:25, buf:20, cost:300},
+        ]
+    },
+
+    reliable: {
+        name:"Most Used", icon:"🛡️",
+        desc:"Toy train + express via Delhi — structured",
+        legs:[
+            {mode:"toy_train", from:"shimla.railway_station", to:"kalka.railway_station", base:330, v:35, buf:30, cost:500},
+            {mode:"express_train", from:"kalka.railway_station", to:"delhi.railway_station", base:260, v:20, buf:40, cost:500},
+            {mode:"express_train", from:"delhi.railway_station", to:"jaipur.railway_station", base:240, v:20, buf:20, cost:500},
+        ]
+    }
+},
+};
+
+
+function getRoute(src, dst) {
+  const key = `${src}_${dst}`;
+  const revKey = `${dst}_${src}`;
+  if (ROUTES[key]) return { ...ROUTES[key], isReversed: false };
+  if (ROUTES[revKey]) {
+    const orig = ROUTES[revKey];
+    const mirrored = { distance: orig.distance, isReversed: true };
+    for (const opt of ['fastest','cheapest','reliable']) {
+      if (!orig[opt]) continue;
+      const revLegs = [...orig[opt].legs].reverse().map(l => ({
+        ...l,
+        from: l.to.replace(new RegExp(`^${dst}\\.`), `${src}.`).replace(new RegExp(`^${src}\\.`), `${dst}.`),
+        to:   l.from.replace(new RegExp(`^${dst}\\.`), `${src}.`).replace(new RegExp(`^${src}\\.`), `${dst}.`),
+      }));
+      mirrored[opt] = { ...orig[opt], legs: revLegs };
+    }
+    return mirrored;
+  }
+  return null;
+}
+
+function resolveHub(key) {
+  return HUBS[key] || { name: key, lat: 0, lon: 0 };
+}
+
+function randn() {
+  let u, v;
+  do { u = Math.random(); } while (u === 0);
+  do { v = Math.random(); } while (v === 0);
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+
+function simulateJourney(legs, depMs, deadlineMs, nRuns) {
+  const deadMin = (deadlineMs - depMs) / 60000;
+  const nLegs = legs.length;
+
+  let successes = 0;
+  const arrivals = [];
+  const legDelays = Array.from({ length: nLegs }, () => []);
+  const overflowCounts = new Array(nLegs).fill(0);
+
+  const totalBase = legs.reduce((s, l) => s + l.base + l.buf, 0) - legs[nLegs - 1].buf;
+
+  for (let sim = 0; sim < nRuns; sim++) {
+    let carried = 0;
+    for (let i = 0; i < nLegs; i++) {
+      const l = legs[i];
+      const raw = randn() * l.v;
+      const clipped = Math.max(-0.5 * l.v, Math.min(2.5 * l.v, raw));
+      const legDelay = Math.max(0, clipped);
+      legDelays[i].push(legDelay + carried);
+      const overflow = Math.max(0, carried + legDelay - l.buf);
+      if (overflow > 0) overflowCounts[i]++;
+      carried = overflow;
+    }
+    const arrival = totalBase + carried;
+    arrivals.push(arrival);
+    if (arrival <= deadMin) successes++;
+  }
+
+  const sorted = [...arrivals].sort((a, b) => a - b);
+  const mean = arrivals.reduce((s, v) => s + v, 0) / nRuns;
+  const std = Math.sqrt(arrivals.reduce((s, v) => s + (v - mean) ** 2, 0) / nRuns);
+  const p5 = sorted[Math.max(0, Math.floor(nRuns * 0.05))];
+  const p95 = sorted[Math.min(nRuns - 1, Math.floor(nRuns * 0.95))];
+
+  const reliab = (successes / nRuns) * 100;
+  const legMeans = legDelays.map(d => d.reduce((s, v) => s + v, 0) / d.length);
+  const overflowRates = overflowCounts.map(c => (c / nRuns) * 100);
+
+  const vulnScores = legs.map((l, i) => l.v / Math.max(1, l.buf));
+  const vulnIdx = vulnScores.indexOf(Math.max(...vulnScores));
+
+  const tightScores = legs.slice(0, -1).map((l) => l.buf / Math.max(1, l.v));
+  const tightIdx = tightScores.length ? tightScores.indexOf(Math.min(...tightScores)) : 0;
+
+  const sens = computeSensitivity(legs, deadMin, Math.floor(nRuns / 2), reliab);
+
+  return {
+    reliability: Math.round(reliab * 10) / 10,
+    failure: Math.round((100 - reliab) * 10) / 10,
+    mean, std, p5, p95,
+    legMeans, overflowRates, vulnIdx, tightIdx, sens,
+    arrivals: arrivals.slice(0, 200),
+    deadlineMin: deadMin,
+  };
+}
+
+function computeSensitivity(legs, deadMin, nRuns, baseR) {
+  const modLegs = legs.map((l, i) => i === 0 ? { ...l, base: l.base + 10 } : l);
+  const totalBase = modLegs.reduce((s, l) => s + l.base + l.buf, 0) - modLegs[modLegs.length - 1].buf;
+  let succ = 0;
+  for (let s = 0; s < nRuns; s++) {
+    let carried = 0;
+    for (const l of modLegs) {
+      const raw = Math.max(-0.5 * l.v, Math.min(2.5 * l.v, randn() * l.v));
+      const ov = Math.max(0, carried + Math.max(0, raw) - l.buf);
+      carried = ov;
+    }
+    if (totalBase + carried <= deadMin) succ++;
+  }
+  return Math.max(0, Math.round((baseR - (succ / nRuns) * 100) * 10) / 10);
+}
+
+function classifyRisk(pct) {
+  if (pct >= 80) return { level: "Low",    color: "#22c55e", cssClass: "Low" };
+  if (pct >= 60) return { level: "Medium", color: "#eab308", cssClass: "Medium" };
+  return              { level: "High",   color: "#ef4444", cssClass: "High" };
+}
+
+let currentOptions = [];
+let currentDepMs = 0;
+let mapboxMap = null;
+let mapboxMarkers = [];
+
+function planJourney() {
+  const src = document.getElementById('src').value;
+  const dst = document.getElementById('dst').value;
+  const depVal = document.getElementById('dep').value;
+  const deadVal = document.getElementById('dead').value;
+  const nSims = parseInt(document.getElementById('simSlider').value);
+
+  if (!depVal || !deadVal) return alert('Please set departure and deadline times.');
+  if (src === dst) return alert('Origin and destination must be different.');
+  const depMs = new Date(depVal).getTime();
+  const deadMs = new Date(deadVal).getTime();
+  if (deadMs <= depMs) return alert('Deadline must be after departure.');
+
+  const route = getRoute(src, dst);
+  if (!route) return alert(`No route data for ${src} ↔ ${dst}.`);
+
+  document.getElementById('simDisplay').textContent = nSims;
+  document.getElementById('overlay').classList.add('active');
+
+  setTimeout(() => {
+    const results = [];
+    for (const optKey of ['fastest', 'cheapest', 'reliable']) {
+      if (!route[optKey]) continue;
+      const tmpl = route[optKey];
+      const legs = tmpl.legs.map(l => ({
+        ...l,
+        fromHub: resolveHub(l.from),
+        toHub: resolveHub(l.to),
+      }));
+
+      const sim = simulateJourney(
+        legs.map(l => ({ base: l.base, v: l.v, buf: l.buf })),
+        depMs, deadMs, nSims
+      );
+
+      const totalCost = legs.reduce((s, l) => s + l.cost, 0);
+      const totalTime = legs.reduce((s, l) => s + l.base + l.buf, 0) - legs[legs.length - 1].buf;
+      const risk = classifyRisk(sim.reliability);
+
+      const vuln = legs[sim.vulnIdx];
+      const vulnMode = MODES[vuln.mode] || { name: vuln.mode };
+      const vulnDesc = `${vulnMode.name}: ${resolveHub(vuln.from).name.split('(')[0].trim()} → ${resolveHub(vuln.to).name.split('(')[0].trim()} (±${vuln.v} min, ${sim.overflowRates[sim.vulnIdx].toFixed(0)}% overflow)`;
+
+      const tightLeg = legs[sim.tightIdx];
+      const nextLeg = legs[Math.min(sim.tightIdx + 1, legs.length - 1)];
+      const tightRatio = tightLeg ? (tightLeg.buf / Math.max(1, tightLeg.v)) : 1;
+      const tightDesc = tightLeg && sim.tightIdx < legs.length - 1
+        ? `${tightLeg.buf}-min buffer between ${MODES[tightLeg.mode]?.name || tightLeg.mode} and ${MODES[nextLeg.mode]?.name || nextLeg.mode} (${tightRatio.toFixed(1)}× variance — ${tightRatio < 0.8 ? 'critically tight' : tightRatio < 1.5 ? 'tight' : 'adequate'})`
+        : 'Final leg — no forward buffer.';
+
+      const sensDesc = `+10 min on ${MODES[legs[0].mode]?.name || legs[0].mode} reduces reliability by ~${sim.sens} pp`;
+
+      let explanation = '';
+      if (risk.level === 'Low') explanation = `Well-buffered route with ${sim.reliability}% on-time probability. Typical delays are absorbed. ${vulnMode.name} has highest variance but buffers are proportionate.`;
+      else if (risk.level === 'Medium') explanation = `Moderate risk: ${sim.reliability}% success rate. Roughly 1 in ${Math.max(2, Math.round(100 / Math.max(1, sim.failure)))} journeys misses the deadline. ${vulnMode.name} variance (±${vuln.v} min) creates pressure on buffers.`;
+      else explanation = `High risk: only ${sim.reliability}% of simulated journeys arrive on time. Cumulative delay propagation exceeds the deadline window in ${sim.failure}% of runs. ${vulnMode.name} is the primary risk source.`;
+
+      const speedScore = Math.max(0, 100 - (totalTime / 1800) * 100);
+      const costScore = Math.max(0, 100 - (totalCost / 8000) * 100);
+      const recScore = sim.reliability * 0.6 + speedScore * 0.25 + costScore * 0.15;
+
+      results.push({
+        key: optKey, name: tmpl.name, icon: tmpl.icon, desc: tmpl.desc,
+        legs, sim, totalCost, totalTime, risk,
+        vulnDesc, tightDesc, sensDesc, explanation,
+        recScore: Math.round(recScore * 10) / 10,
+        distance: route.distance,
+      });
+    }
+
+    results.sort((a, b) => b.recScore - a.recScore);
+    currentOptions = results;
+    currentDepMs = depMs;
+
+    document.getElementById('overlay').classList.remove('active');
+    renderResults(results, src, dst, nSims, depMs, deadMs, route.distance);
+  }, 700);
+}
+
+function fmtMin(m) {
+  const h = Math.floor(m / 60), mn = Math.round(m % 60);
+  return h > 0 ? `${h}h ${mn}m` : `${mn}m`;
+}
+
+function fmtArr(depMs, min) {
+  const t = new Date(depMs + min * 60000);
+  return t.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) +
+    ', ' + t.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+}
+
+function renderResults(results, src, dst, nSims, depMs, deadMs, distKm) {
+  const best = results[0];
+  const deadMin = (deadMs - depMs) / 60000;
+
+  document.getElementById('resTitle').textContent = `${CITIES[src].emoji} ${CITIES[src].name} → ${CITIES[dst].emoji} ${CITIES[dst].name}`;
+  document.getElementById('resMeta').textContent = `Departure: ${new Date(depMs).toLocaleString('en-IN', {dateStyle:'medium',timeStyle:'short'})} · Deadline window: ${fmtMin(deadMin)}`;
+  document.getElementById('simTag').textContent = `${nSims} simulations`;
+  document.getElementById('distTag').textContent = `${distKm} km`;
+
+  document.getElementById('recMain').textContent = `"${best.name}" — ${best.sim.reliability}% on-time probability (${best.risk.level} Risk)`;
+  document.getElementById('recSub').textContent = `Total time: ${fmtMin(best.totalTime)} · Cost: ₹${best.totalCost.toLocaleString('en-IN')} · Avg arrival: ${fmtArr(depMs, best.sim.mean)}`;
+
+  const cheapest = [...results].sort((a,b) => a.totalCost - b.totalCost)[0];
+  const fastest = [...results].sort((a,b) => a.totalTime - b.totalTime)[0];
+  document.getElementById('dDist').textContent = `${distKm} km`;
+  document.getElementById('dWindow').textContent = fmtMin(deadMin);
+  document.getElementById('dBestProb').textContent = `${best.sim.reliability}%`;
+  document.getElementById('dBestCost').textContent = `₹${cheapest.totalCost.toLocaleString('en-IN')}`;
+  document.getElementById('dFastest').textContent = fmtMin(fastest.totalTime);
+
+  const grid = document.getElementById('optGrid');
+  grid.innerHTML = '';
+  results.forEach((opt, idx) => renderOptionCard(opt, idx, grid, depMs));
+
+  document.getElementById('mapTabs').innerHTML = results.map((r, i) =>
+    `<button class="mtab${i===0?' active':''}" onclick="showMap(${i})">${r.icon} ${r.name}</button>`
+  ).join('');
+
+  document.getElementById('histTabs').innerHTML = results.map((r, i) =>
+    `<button class="htab${i===0?' active':''}" onclick="renderHist(${i})">${r.icon} ${r.name}</button>`
+  ).join('');
+
+  renderCompTable(results, depMs);
+  initMap(results[0], src, dst);
+  renderHist(0);
+
+  const sec = document.getElementById('results-section');
+  sec.classList.add('active');
+  sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderOptionCard(opt, idx, container, depMs) {
+  const isRec = idx === 0;
+  const { sim, risk } = opt;
+  const arcLen = 226;
+  const offset = arcLen * (1 - sim.reliability / 100);
+
+  const card = document.createElement('div');
+  card.className = `opt-card${isRec ? ' rec' : ''}`;
+  card.onclick = () => { showMap(idx); switchHist(idx); };
+
+  card.innerHTML = `
+    <div class="opt-head">
+      <div class="opt-name">${opt.icon} ${isRec ? '★ ' : ''}${opt.name}</div>
+      <span class="rpill rpill-${risk.level}">${risk.level}</span>
+    </div>
+    <div class="opt-body">
+      <div class="gauge-wrap">
+        <div class="gauge">
+          <svg width="100" height="100" viewBox="0 0 100 100">
+            <circle class="g-track" cx="50" cy="50" r="44" stroke-dasharray="${arcLen} ${360 - arcLen}" stroke-dashoffset="0"/>
+            <circle class="g-fill" cx="50" cy="50" r="44"
+              stroke="${risk.color}"
+              stroke-dasharray="${arcLen} ${360 - arcLen}"
+              stroke-dashoffset="${offset}"/>
+          </svg>
+          <div class="g-num" style="color:${risk.color}">${sim.reliability}%</div>
+        </div>
+        <div class="gauge-label">On-Time Probability</div>
+        <div class="gauge-sub">${sim.failure}% miss rate</div>
+      </div>
+
+      <div class="arr-band">
+        <div class="arr-row"><span class="arr-key">🟢 Best case (5%)</span><span class="arr-val best">${fmtArr(depMs, sim.p5)}</span></div>
+        <div class="arr-row"><span class="arr-key">⬜ Mean arrival</span><span class="arr-val avg">${fmtArr(depMs, sim.mean)}</span></div>
+        <div class="arr-row"><span class="arr-key">🔴 Worst (95%)</span><span class="arr-val worst">${fmtArr(depMs, sim.p95)}</span></div>
+      </div>
+
+      <div class="metric-list">
+        <div class="metric-row"><span class="mk">Total time</span><span class="mv">${fmtMin(opt.totalTime)}</span></div>
+        <div class="metric-row"><span class="mk">Total cost</span><span class="mv">₹${opt.totalCost.toLocaleString('en-IN')}</span></div>
+        <div class="metric-row"><span class="mk">Spread (σ)</span><span class="mv">±${Math.round(sim.std)} min</span></div>
+        <div class="metric-row"><span class="mk">Distance</span><span class="mv">${opt.distance} km</span></div>
+        <div class="metric-row"><span class="mk">Rec. score</span><span class="mv">${opt.recScore}/100</span></div>
+      </div>
+
+      <div class="legs-wrap">
+        <div class="legs-label">Journey Legs — Propagation Chain</div>
+        ${opt.legs.map((leg, i) => {
+          const m = MODES[leg.mode] || { name: leg.mode, icon: '🚗', color: '#888' };
+          const ov = sim.overflowRates[i] || 0;
+          const isVuln = i === sim.vulnIdx;
+          const bufRatio = leg.buf > 0 ? Math.min(100, (leg.buf / leg.v) * 50) : 0;
+          const bufColor = bufRatio > 60 ? '#22c55e' : bufRatio > 30 ? '#eab308' : '#ef4444';
+          const fromH = resolveHub(leg.from);
+          const toH = resolveHub(leg.to);
+          return `
+            <div class="leg">
+              <div class="leg-dot" style="background:${m.color}">${m.icon}</div>
+              <div class="leg-info">
+                <div class="leg-mode">${m.name}${isVuln ? ' ⚠️' : ''}</div>
+                <div class="leg-route">${fromH.name.split('(')[0].trim()} → ${toH.name.split('(')[0].trim()}</div>
+                <div class="leg-chips">
+                  <span class="leg-chip">~${leg.base}m</span>
+                  <span class="leg-chip">±${leg.v}m</span>
+                  <span class="leg-chip">₹${leg.cost}</span>
+                  <span class="leg-chip${ov > 20 ? ' warn' : ''}">${ov.toFixed(0)}% overflow</span>
+                </div>
+              </div>
+            </div>
+            ${i < opt.legs.length - 1 ? `
+            <div class="buf-line">
+              <span>${leg.buf}m buffer</span>
+              <div class="buf-bar"><div class="buf-fill" style="width:${bufRatio}%;background:${bufColor}"></div></div>
+              <span style="color:${bufColor}">${bufRatio > 60 ? '✓' : bufRatio > 30 ? '⚡' : '⚠'}</span>
+            </div>` : ''}
+          `;
+        }).join('')}
+      </div>
+
+      <div class="risk-box ${risk.level}">
+        <div class="risk-box-title">Risk Analysis</div>
+        <div>${opt.explanation}</div>
+        <div class="sens-pill">📊 ${opt.sensDesc}</div>
+      </div>
+
+      <div style="margin-top:8px;padding:7px 10px;background:var(--surface3);border-radius:6px;font-size:0.68rem;color:var(--text2)">
+        <strong style="color:var(--text)">Vulnerable leg:</strong> ${opt.vulnDesc}
+      </div>
+      <div style="margin-top:5px;padding:7px 10px;background:var(--surface3);border-radius:6px;font-size:0.68rem;color:var(--text2)">
+        <strong style="color:var(--text)">Tightest buffer:</strong> ${opt.tightDesc}
+      </div>
+    </div>
+  `;
+  container.appendChild(card);
+}
+
+function renderCompTable(results, depMs) {
+  const tbody = document.getElementById('compBody');
+  tbody.innerHTML = '';
+  [...results].sort((a, b) => b.sim.reliability - a.sim.reliability).forEach((opt, i) => {
+    const tr = document.createElement('tr');
+    if (i === 0) tr.className = 'rec-row';
+    tr.innerHTML = `
+      <td>${i===0?'<strong>★ ':''}${opt.icon} ${opt.name}${i===0?'</strong>':''}</td>
+      <td><strong style="color:${opt.risk.color}">${opt.sim.reliability}%</strong> <small style="color:var(--text3)">/ ${opt.sim.failure}% fail</small></td>
+      <td><span class="rpill rpill-${opt.risk.level}">${opt.risk.level}</span></td>
+      <td>${fmtMin(opt.totalTime)}</td>
+      <td>₹${opt.totalCost.toLocaleString('en-IN')}</td>
+      <td>${fmtArr(depMs, opt.sim.mean)}</td>
+      <td style="color:var(--red)">${fmtArr(depMs, opt.sim.p95)}</td>
+      <td style="font-size:0.7rem;color:var(--text2)">${opt.vulnDesc.split(':')[0]}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+async function initMap(opt, src, dst) {
+  if (mapboxMap) {
+    mapboxMap.remove();
+    mapboxMap = null;
+  }
+
+ mapboxgl.accessToken ='pk.eyJ1IjoibW9ua2V5dWNoaWEiLCJhIjoiY21uazQ5MXByMHIwdzJvcXVxcjUybXBreCJ9.KQCrZ1b0zBwJqvxkCINxUQ';
+
+  const srcCity = CITIES[src];
+  const dstCity = CITIES[dst];
+  const midLat = (srcCity.lat + dstCity.lat) / 2;
+  const midLon = (srcCity.lon + dstCity.lon) / 2;
+
+  mapboxMap = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/dark-v11',
+    center: [midLon, midLat],
+    zoom: 5
+  });
+
+  mapboxMap.on('load', () => {
+    renderMapRoute(opt);
+  });
+}
+
+function renderMapRoute(opt) {
+  if (!mapboxMap || !opt) return;
+
+  if (mapboxMap.getSource('route')) {
+    mapboxMap.removeLayer('route');
+    mapboxMap.removeSource('route');
+  }
+
+  mapboxMarkers.forEach(m => m.remove());
+  mapboxMarkers = [];
+
+  const routeCoords = [];
+
+  opt.legs.forEach((leg, i) => {
+    const from = leg.fromHub;
+    const to = leg.toHub;
+    if (!from?.lat || !to?.lat) return;
+    const fromCoord = [from.lon, from.lat];
+    const toCoord = [to.lon, to.lat];
+    if (routeCoords.length === 0) routeCoords.push(fromCoord);
+    routeCoords.push(toCoord);
+
+    const markerFrom = new mapboxgl.Marker().setLngLat(fromCoord).addTo(mapboxMap);
+    const markerTo = new mapboxgl.Marker().setLngLat(toCoord).addTo(mapboxMap);
+    mapboxMarkers.push(markerFrom, markerTo);
+  });
+
+  mapboxMap.addSource('route', {
+    type: 'geojson',
+    data: {
+      type: 'Feature',
+      geometry: { type: 'LineString', coordinates: routeCoords }
+    }
+  });
+
+  mapboxMap.addLayer({
+    id: 'route',
+    type: 'line',
+    source: 'route',
+    paint: { 'line-color': '#22c55e', 'line-width': 4 }
+  });
+
+  const bounds = new mapboxgl.LngLatBounds();
+  routeCoords.forEach(c => bounds.extend(c));
+  mapboxMap.fitBounds(bounds, { padding: 50 });
+}
+
+function showMap(idx) {
+  document.querySelectorAll('.mtab').forEach((t, i) => t.classList.toggle('active', i === idx));
+  if (!currentOptions || !currentOptions[idx]) return;
+  renderMapRoute(currentOptions[idx]);
+}
+
+function renderHist(idx) {
+  document.querySelectorAll('.htab').forEach((t, i) => t.classList.toggle('active', i === idx));
+  const opt = currentOptions[idx];
+  if (!opt) return;
+
+  const isLight = document.body.classList.contains('light');
+
+  const canvas = document.getElementById('hist-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth || 900;
+  const H = 130;
+  canvas.width = W;
+  canvas.height = H;
+  ctx.clearRect(0, 0, W, H);
+
+  const arrivals = opt.sim.arrivals;
+  if (!arrivals.length) return;
+
+  const deadMin = opt.sim.deadlineMin;
+  const minA = Math.min(...arrivals) - 5;
+  const maxA = Math.max(...arrivals, deadMin + 20) + 5;
+  const range = maxA - minA;
+  const nBins = 32;
+  const binSize = range / nBins;
+  const bins = new Array(nBins).fill(0);
+  arrivals.forEach(a => {
+    const b = Math.min(nBins - 1, Math.floor((a - minA) / binSize));
+    bins[b]++;
+  });
+  const maxBin = Math.max(...bins) || 1;
+  const barW = (W - 48) / nBins;
+  const deadX = 24 + ((deadMin - minA) / range) * (W - 48);
+
+  // Zone fills
+  ctx.fillStyle = isLight ? 'rgba(22,163,74,0.08)' : 'rgba(34,197,94,0.06)';
+  ctx.fillRect(24, 0, Math.min(Math.max(deadX - 24, 0), W - 48), H - 22);
+  ctx.fillStyle = isLight ? 'rgba(220,38,38,0.07)' : 'rgba(239,68,68,0.06)';
+  ctx.fillRect(Math.max(deadX, 24), 0, W - Math.max(deadX, 24), H - 22);
+
+  // Bars
+  bins.forEach((count, i) => {
+    const x = 24 + i * barW;
+    const barH = (count / maxBin) * (H - 34);
+    const binMid = minA + (i + 0.5) * binSize;
+    const color = binMid <= deadMin ? '#22c55e' : '#ef4444';
+    ctx.fillStyle = color + '80';
+    ctx.fillRect(x + 1, H - 22 - barH, barW - 2, barH);
+    ctx.fillStyle = color;
+    ctx.fillRect(x + 1, H - 23, barW - 2, 1);
+  });
+
+  // Deadline line
+  if (deadX > 24 && deadX < W) {
+    ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath(); ctx.moveTo(deadX, 0); ctx.lineTo(deadX, H - 22); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#ef4444';
+    ctx.font = '9px JetBrains Mono,monospace';
+    ctx.fillText('Deadline', deadX + 3, 12);
+  }
+
+  // Mean line
+  const meanX = 24 + ((opt.sim.mean - minA) / range) * (W - 48);
+  if (meanX > 24 && meanX < W) {
+    const meanColor = isLight ? 'rgba(15,26,48,0.35)' : 'rgba(255,255,255,0.4)';
+    ctx.strokeStyle = meanColor; ctx.lineWidth = 1;
+    ctx.setLineDash([3, 2]);
+    ctx.beginPath(); ctx.moveTo(meanX, 0); ctx.lineTo(meanX, H - 22); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = isLight ? 'rgba(15,26,48,0.45)' : 'rgba(255,255,255,0.5)';
+    ctx.font = '9px JetBrains Mono,monospace';
+    ctx.fillText('Mean', meanX + 2, H - 24);
+  }
+
+  // Axis labels
+  ctx.fillStyle = isLight ? 'rgba(15,26,48,0.35)' : 'rgba(255,255,255,0.25)';
+  ctx.font = '8px JetBrains Mono,monospace';
+  ctx.fillText(fmtMin(minA), 24, H - 5);
+  ctx.fillText(fmtMin(maxA), W - 36, H - 5);
+
+  document.getElementById('histLegend').textContent =
+    `🟢 Before deadline: ${opt.sim.reliability}% of runs | 🔴 After deadline: ${opt.sim.failure}% of runs`;
+}
+
+function switchHist(idx) {
+  document.querySelectorAll('.htab').forEach((t, i) => t.classList.toggle('active', i === idx));
+  renderHist(idx);
+}
+
+function swapCities() {
+  const src = document.getElementById('src');
+  const dst = document.getElementById('dst');
+  [src.value, dst.value] = [dst.value, src.value];
+  onCityChange();
+}
+
+function onCityChange() {
+  const src = document.getElementById('src').value;
+  const dst = document.getElementById('dst').value;
+  if (src === dst) {
+    const srcEl = document.getElementById('src');
+    const opts = Array.from(srcEl.options);
+    const other = opts.find(o => o.value !== dst);
+    if (other) document.getElementById('dst').value = other.value;
+  }
+
+  const route = getRoute(src, dst);
+  const bar = document.getElementById('routeInfoBar');
+  if (route) {
+    document.getElementById('routeDistLabel').textContent = `${route.distance} km`;
+    const modes = new Set();
+    for (const opt of ['fastest','cheapest','reliable']) {
+      if (route[opt]) route[opt].legs.forEach(l => modes.add(MODES[l.mode]?.name || l.mode));
+    }
+    document.getElementById('routeModesLabel').textContent = [...modes].join(', ');
+    bar.classList.add('visible');
+  } else {
+    bar.classList.remove('visible');
+  }
+}
+
+// Pref chips
+document.querySelectorAll('.pref-chip').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.pref-chip').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+// Ticker
+(function buildTicker() {
+const pairs = [
+  ['Delhi','Lucknow',556],
+  ['Delhi','Chandigarh',250],
+  ['Delhi','Jaipur',270],
+  ['Delhi','Pune',1408],
+  ['Delhi','Shimla',350],
+
+  ['Lucknow','Chandigarh',750],
+  ['Lucknow','Jaipur',570],
+  ['Lucknow','Pune',1400],
+  ['Lucknow','Shimla',800],
+
+  ['Chandigarh','Jaipur',520],
+  ['Chandigarh','Pune',1650],
+  ['Chandigarh','Shimla',115],
+
+  ['Jaipur','Pune',1150],
+  ['Jaipur','Shimla',630],
+
+  ['Shimla','Pune',1800]
+];
+  const html = [...pairs, ...pairs].map(([a,b,d]) =>
+    `<div class="ticker-item"><span>${a}</span> ↔ <span>${b}</span> · ${d} km</div>`
+  ).join('');
+  const t = document.getElementById('ticker');
+  if (t) t.innerHTML = html;
+})();
+
+// City pills
+(function buildPills() {
+  const el = document.getElementById('cityPills');
+  if (!el) return;
+  el.innerHTML = Object.entries(CITIES).map(([k,v]) =>
+    `<div class="city-pill">${v.emoji} ${v.name} <span style="color:var(--text3)">${v.code}</span></div>`
+  ).join('');
+})();
+
+// Default dates
+(function setDefaults() {
+  const pad = n => String(n).padStart(2,'0');
+  const fmt = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  const now = new Date();
+  document.getElementById('dep').value = fmt(new Date(now.getTime() + 3600000));
+  document.getElementById('dead').value = fmt(new Date(now.getTime() + 36000000));
+})();
+
+onCityChange();
+</script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   THEME TOGGLE — persisted in localStorage
+═══════════════════════════════════════════════════════════ */
+const toggle = document.getElementById("themeToggle");
+
+toggle.addEventListener("change", () => {
+  const isLight = toggle.checked;
+  document.body.classList.toggle("light", isLight);
+  localStorage.setItem("theme", isLight ? "light" : "dark");
+
+  // Re-render histogram with correct colors for new theme
+  const activeHtab = document.querySelector('.htab.active');
+  if (activeHtab && currentOptions.length) {
+    const idx = Array.from(document.querySelectorAll('.htab')).indexOf(activeHtab);
+    if (idx >= 0) renderHist(idx);
+  }
+});
+
+window.addEventListener("load", () => {
+  if (localStorage.getItem("theme") === "light") {
+    document.body.classList.add("light");
+    toggle.checked = true;
+  }
+});
+</script>
+</body>
+</html>
