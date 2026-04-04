@@ -1,5 +1,5 @@
 """
-SureTrip v3 — Risk Analysis & Explanation Engine
+SureMyTrip — Risk Analysis & Explanation Engine
 """
 from dataclasses import dataclass
 from typing import List
